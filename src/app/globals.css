@@ -1,0 +1,204 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeue-Thin.woff2') format('woff2');
+    font-weight: 100;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeue-Light.woff2') format('woff2');
+    font-weight: 300;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeue-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 0%;
+
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 0%;
+
+    --radius: 0.5rem;
+
+    --foreground-rgb: 0, 0, 0;
+    --background-start-rgb: 255, 255, 255;
+    --background-end-rgb: 255, 255, 255;
+  }
+
+  .dark {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 70%;
+
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 0% 100%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-white text-gray-900;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+.font-montserrat {
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Adding utility classes for bg-background and other needed ones */
+.bg-background {
+  background-color: hsl(var(--background));
+}
+
+.text-foreground {
+  color: hsl(var(--foreground));
+}
+
+.bg-card {
+  background-color: hsl(var(--card));
+}
+
+.text-card-foreground {
+  color: hsl(var(--card-foreground));
+}
+
+.bg-primary {
+  background-color: hsl(var(--primary));
+}
+
+.text-primary-foreground {
+  color: hsl(var(--primary-foreground));
+}
+
+.bg-secondary {
+  background-color: hsl(var(--secondary));
+}
+
+.text-secondary-foreground {
+  color: hsl(var(--secondary-foreground));
+}
+
+.bg-muted {
+  background-color: hsl(var(--muted));
+}
+
+.text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+}
+
+@layer utilities {
+  /* Hide scrollbar but allow scrolling */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+  
+  .bg-glass {
+    @apply bg-white/10 backdrop-blur-sm border-2 border-white/30;
+  }
+  
+  .input-glass {
+    @apply bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white placeholder:text-white/60 focus:ring-2 focus:ring-white/50 focus:border-transparent;
+  }
+}
+
+/* ReactFlow specific styles to override dark background */
+.react-flow__container {
+  background-color: white !important;
+}
+
+.react-flow__pane {
+  background-color: white !important;
+}
+
+.react-flow {
+  background-color: white !important;
+}
+
+/* Additional ReactFlow elements that might have dark backgrounds */
+.react-flow__viewport {
+  background-color: white !important;
+}
+
+.react-flow__node {
+  background-color: transparent !important;
+}
+
+.react-flow__edge {
+  color: #94a3b8 !important;
+}
+
+.react-flow__attribution {
+  background-color: transparent !important;
+  color: #64748b !important;
+}
+
+.react-flow__background {
+  background-color: white !important;
+}
