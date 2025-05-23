@@ -6,6 +6,19 @@ import { randomUUID } from 'crypto';
 // Regex para detectar URLs no formato /{userSlug}/{referralSlug}
 const REFERRAL_REGEX = /^\/([^\/]+)\/([^\/]+)$/;
 
+const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'your-jwt-secret';
+
+// Rotas públicas do paciente
+const PATIENT_PUBLIC_ROUTES = [
+  '/patient/login',
+  '/patient/register',
+  '/patient/access',
+  '/patient/reset-password',
+  '/patient/validate',
+  '/api/patient/magic-link',
+  '/api/patient/verify'
+];
+
 // Verificar se o paciente está autenticado
 async function isPatientAuthenticated(req: NextRequest): Promise<{ isAuthenticated: boolean; patientId?: string }> {
   const cookie = req.cookies.get('patient_token');
@@ -32,97 +45,51 @@ async function isPatientAuthenticated(req: NextRequest): Promise<{ isAuthenticat
 
 export async function middleware(req: NextRequest) {
   const { pathname } = new URL(req.url);
-  
-  // Verificar se é uma rota do paciente
-  if (pathname.startsWith('/patient/')) {
-    // Permitir acesso às rotas públicas do paciente
-    if (pathname === '/patient/login' || 
-        pathname === '/patient/register' || 
-        pathname === '/patient/access' ||
-        pathname === '/patient/reset-password' ||
-        pathname.startsWith('/patient/reset-password/') ||
-        pathname === '/patient/validate') {
-      return NextResponse.next();
-    }
+  console.log('\n=== VERIFICAÇÃO DE ROTA DO PACIENTE ===');
+  console.log('URL:', req.url);
+  console.log('Pathname:', pathname);
 
-    // Verificar autenticação para rotas protegidas do paciente
-    const authResult = await isPatientAuthenticated(req);
-    
-    // Se o paciente já estiver logado e tentar acessar uma rota pública, redirecionar para a página do paciente
-    if ((pathname === '/patient/login' || pathname === '/patient/register') && authResult.isAuthenticated && authResult.patientId) {
-      return NextResponse.redirect(new URL(`/patient/${authResult.patientId}`, req.url));
-    }
-
-    // Se estiver tentando acessar uma rota protegida e não estiver autenticado
-    if (!authResult.isAuthenticated) {
-      const response = NextResponse.redirect(new URL('/patient/login', req.url));
-      response.cookies.delete('patient_token');
-      return response;
-    }
-
-    // Se estiver tentando acessar a rota raiz de paciente (/patient), redirecionar para a página específica do paciente
-    if (pathname === '/patient') {
-      return NextResponse.redirect(new URL(`/patient/${authResult.patientId}`, req.url));
-    }
-
+  // Verificar se é uma rota pública do paciente
+  if (PATIENT_PUBLIC_ROUTES.some(route => pathname.startsWith(route)) || 
+      pathname.startsWith('/patient/reset-password/')) {
+    console.log('✅ Rota pública do paciente, permitindo acesso');
     return NextResponse.next();
   }
 
-  // Verificar se é uma rota de referência para rastreamento
-  const match = pathname.match(REFERRAL_REGEX);
-  if (match) {
-    const userSlug = match[1];
-    const referralSlug = match[2];
+  // Verificar token do paciente
+  const patientSession = req.cookies.get('patient_session');
+  console.log('Token encontrado?', !!patientSession?.value);
 
-    // Ignorar rotas conhecidas como api, _next, etc.
-    const isSystemRoute = userSlug.startsWith('api') || 
-                          userSlug.startsWith('_next') || 
-                          userSlug.startsWith('static') || 
-                          userSlug === 'favicon.ico';
-    
-    if (!isSystemRoute && userSlug && referralSlug) {
-      try {
-        // Buscar o usuário e a referência
-        const user = await prisma.user.findUnique({
-          where: { slug: userSlug }
-        });
-
-        if (user) {
-          const referral = await prisma.patientReferral.findFirst({
-            where: {
-              slug: referralSlug,
-              patient: {
-                userId: user.id
-              }
-            }
-          });
-
-          if (referral) {
-            // Incrementar contador de visitas
-            await prisma.patientReferral.update({
-              where: { id: referral.id },
-              data: { visits: { increment: 1 } }
-            });
-
-            // Registrar evento de visualização
-            await prisma.event.create({
-              data: {
-                id: randomUUID(),
-                type: 'REFERRAL_VIEW',
-                userId: user.id,
-                ip: req.headers.get('x-forwarded-for') || 'unknown',
-                userAgent: req.headers.get('user-agent') || 'unknown'
-              }
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Erro no middleware:', error);
-      }
-    }
+  if (!patientSession?.value) {
+    console.log('❌ Sem token de paciente, redirecionando para login');
+    return NextResponse.redirect(new URL('/patient/login', req.url));
   }
 
-  return NextResponse.next();
+  try {
+    // Verificar e decodificar o token
+    const decoded = verify(patientSession.value, JWT_SECRET) as {
+      patientId: string;
+      type: string;
+    };
+
+    console.log('Dados do token:', {
+      patientId: decoded.patientId,
+      type: decoded.type
+    });
+
+    if (decoded.type !== 'session') {
+      throw new Error('Tipo de token inválido');
+    }
+
+    console.log('✅ Token válido, permitindo acesso');
+    return NextResponse.next();
+  } catch (error) {
+    console.error('❌ Erro na verificação do token:', error);
+    // Limpar cookie inválido
+    const response = NextResponse.redirect(new URL('/patient/login', req.url));
+    response.cookies.delete('patient_session');
+    return response;
+  }
 }
 
 // Configurar quais caminhos o middleware deve processar
@@ -130,6 +97,7 @@ export const config = {
   matcher: [
     // Rotas do paciente
     '/patient/:path*',
+    '/api/patient/:path*',
     // Qualquer rota para capturar padrões de referência
     '/:userSlug/:referral',
   ],

@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
       where: { id: session.user.id },
       select: {
         plan: true,
-        planExpiresAt: true
+        planExpiresAt: true,
+        isPremium: true
       }
     });
 
@@ -42,24 +43,30 @@ export async function GET(request: NextRequest) {
 
     // Verificar se o plano premium expirou
     let planData;
-    if (user.plan === 'premium' && user.planExpiresAt && new Date(user.planExpiresAt) < new Date()) {
+    const isPremiumUser = user.isPremium === true || user.plan === 'premium';
+    const planExpired = user.planExpiresAt && new Date(user.planExpiresAt) < new Date();
+
+    if (isPremiumUser && planExpired) {
       // Atualizar usuário para plano gratuito
       await prisma.user.update({
         where: { id: session.user.id },
         data: {
           plan: 'free',
-          planExpiresAt: null
+          planExpiresAt: null,
+          isPremium: false
         }
       });
 
       planData = {
         plan: 'free',
-        planExpiresAt: null
+        planExpiresAt: null,
+        isPremium: false
       };
     } else {
       planData = {
         plan: user.plan,
-        planExpiresAt: user.planExpiresAt
+        planExpiresAt: user.planExpiresAt,
+        isPremium: user.isPremium
       };
     }
 

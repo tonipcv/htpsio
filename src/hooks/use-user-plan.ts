@@ -63,7 +63,7 @@ export function useUserPlan(): UserPlan {
         }
 
         const planData = {
-          isPremium: data.plan === 'premium',
+          isPremium: data.isPremium === true || data.plan === 'premium',
           isLoading: false,
           planExpiresAt: data.planExpiresAt,
           daysRemaining

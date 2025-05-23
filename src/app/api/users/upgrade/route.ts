@@ -34,12 +34,17 @@ export async function POST(req: Request) {
     
     // Atualizar plano do usuário
     const planType = plan.startsWith('premium') ? 'premium' : 'free';
+    const isPremium = planType === 'premium';
     
     await prisma.user.update({
       where: { id: session.user.id },
       data: {
         plan: planType,
-        planExpiresAt: planType === 'premium' ? expiryDate : null
+        planExpiresAt: planType === 'premium' ? expiryDate : null,
+        isPremium: isPremium,
+        premiumSince: isPremium ? new Date() : null,
+        planStatus: isPremium ? 'active' : 'inactive',
+        planUpdatedAt: new Date()
       }
     });
 
@@ -47,7 +52,8 @@ export async function POST(req: Request) {
       success: true,
       message: 'Plano atualizado com sucesso',
       plan: planType,
-      planExpiresAt: planType === 'premium' ? expiryDate : null
+      planExpiresAt: planType === 'premium' ? expiryDate : null,
+      isPremium: isPremium
     });
   } catch (error) {
     console.error('Erro ao atualizar plano:', error);

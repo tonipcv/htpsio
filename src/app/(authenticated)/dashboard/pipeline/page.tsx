@@ -100,9 +100,12 @@ export default function PipelinePage() {
 
   useEffect(() => {
     // Verifica se o usuário está autenticado e não é premium
-    if (status === 'authenticated' && session?.user && session.user.plan !== 'premium') {
-      router.push('/bloqueado');
-      return;
+    if (status === 'authenticated' && session?.user) {
+      const isPremiumUser = session.user.isPremium === true || session.user.plan === 'premium';
+      if (!isPremiumUser) {
+        router.push('/bloqueado');
+        return;
+      }
     }
 
     if (session?.user?.id) {
