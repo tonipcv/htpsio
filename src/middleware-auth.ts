@@ -54,7 +54,7 @@ async function getUserPlan(token: any): Promise<string> {
     }
     
     // Verificar plano do token
-    if (token?.plan === 'premium') {
+    if (token?.plan === 'premium' || token?.isPremium === true) {
       console.log('Token indica plano premium');
       return 'premium';
     }

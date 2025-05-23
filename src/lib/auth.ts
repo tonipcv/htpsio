@@ -18,6 +18,7 @@ declare module 'next-auth' {
     userSlug?: string;
     image?: string | null;
     plan?: string;
+    isPremium?: boolean;
   }
 
   interface Session {
@@ -56,7 +57,8 @@ export const authOptions: AuthOptions = {
               user: {
                 select: {
                   slug: true,
-                  plan: true
+                  plan: true,
+                  isPremium: true
                 }
               }
             }
@@ -81,7 +83,8 @@ export const authOptions: AuthOptions = {
             name: patient.name,
             type: 'patient' as const,
             userSlug: patient.user?.slug,
-            plan: patient.user?.plan || undefined
+            plan: patient.user?.plan || undefined,
+            isPremium: patient.user?.isPremium || false
           };
         }
 
@@ -94,7 +97,8 @@ export const authOptions: AuthOptions = {
             password: true,
             slug: true,
             image: true,
-            plan: true
+            plan: true,
+            isPremium: true
           }
         });
 
@@ -118,7 +122,8 @@ export const authOptions: AuthOptions = {
           type: 'user' as const,
           userSlug: user.slug,
           image: user.image,
-          plan: user.plan || undefined
+          plan: user.plan || undefined,
+          isPremium: user.isPremium || false
         };
       }
     })
@@ -132,6 +137,7 @@ export const authOptions: AuthOptions = {
         token.image = user.image;
         token.plan = user.plan;
         token.email = user.email;
+        token.isPremium = user.isPremium;
       }
       return token;
     },
@@ -145,7 +151,8 @@ export const authOptions: AuthOptions = {
           type: token.type as 'user' | 'patient',
           userSlug: token.userSlug as string | undefined,
           image: token.image as string | null | undefined,
-          plan: token.plan
+          plan: token.plan,
+          isPremium: token.isPremium as boolean | undefined
         }
       };
     }
