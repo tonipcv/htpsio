@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { randomUUID } from 'crypto';
 
 export async function GET() {
   try {
@@ -114,8 +115,10 @@ export async function POST(request: Request) {
     });
 
     try {
+      // Create the page first
       const page = await prisma.page.create({
         data: {
+          id: randomUUID(),
           userId: session.user.id,
           title,
           subtitle: subtitle || null,
@@ -125,13 +128,7 @@ export async function POST(request: Request) {
           avatarUrl: avatarUrl || null,
           address: address || null,
           isModal: isModal || false,
-          addresses: addresses?.length ? {
-            create: addresses.map(addr => ({
-              name: addr.name,
-              address: addr.address,
-              isDefault: addr.isDefault
-            }))
-          } : undefined,
+          updatedAt: new Date(),
           blocks: {
             create: [] // Initialize empty blocks array
           },
@@ -142,7 +139,6 @@ export async function POST(request: Request) {
         include: {
           blocks: true,
           socialLinks: true,
-          addresses: true,
           user: {
             select: {
               id: true,
@@ -153,6 +149,37 @@ export async function POST(request: Request) {
           },
         },
       });
+
+      // Create addresses if provided
+      if (addresses?.length) {
+        await Promise.all(
+          addresses.map(addr =>
+            prisma.pageAddress.create({
+              data: {
+                id: randomUUID(),
+                pageId: page.id,
+                name: addr.name,
+                address: addr.address,
+                isDefault: addr.isDefault || false,
+                updatedAt: new Date()
+              }
+            })
+          )
+        );
+
+        // Fetch the created addresses
+        const createdAddresses = await prisma.pageAddress.findMany({
+          where: {
+            pageId: page.id
+          }
+        });
+
+        // Return the page with addresses
+        return NextResponse.json({
+          ...page,
+          addresses: createdAddresses
+        });
+      }
 
       console.log('POST /api/pages - Created page:', page);
       console.log('POST /api/pages - Page URL will be:', `med1.app/${user.slug}/${page.slug}`);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { randomUUID } from 'crypto';
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,6 +36,7 @@ export async function POST(req: NextRequest) {
 
     // Se não encontrar o usuário, ainda registramos o evento com informações limitadas
     const eventData: Omit<Prisma.EventUncheckedCreateInput, 'userId'> & { userId?: string } = {
+      id: randomUUID(),
       type,
       ip: ip.toString(),
       userAgent,
@@ -108,6 +110,7 @@ export async function GET(req: NextRequest) {
 
     // Se não encontrar o usuário, ainda registramos o evento com informações limitadas
     const eventData: Omit<Prisma.EventUncheckedCreateInput, 'userId'> & { userId?: string } = {
+      id: randomUUID(),
       type,
       ip: ip.toString(),
       userAgent,

@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
 import { slugify } from "@/lib/utils";
+import { randomUUID } from "crypto";
 
 const prisma = new PrismaClient();
 
@@ -52,6 +53,7 @@ export async function POST(req: NextRequest) {
     // Criar o novo usuário
     const newUser = await prisma.user.create({
       data: {
+        id: randomUUID(),
         name,
         email,
         password: hashedPassword,

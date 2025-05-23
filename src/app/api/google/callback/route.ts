@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { prisma } from '@/lib/prisma';
+import { randomUUID } from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,6 +50,7 @@ export async function GET(req: NextRequest) {
         token_type: 'Bearer'
       },
       create: {
+        id: randomUUID(),
         provider: 'google',
         providerAccountId: state, // Usando o ID do usuário como providerAccountId
         type: 'oauth',

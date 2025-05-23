@@ -15,46 +15,45 @@ export default function BloqueadoPage() {
   const handleContinue = () => {
     setIsAnimating(true);
     setTimeout(() => {
-      router.push('/inside-sales');
+      router.push('/onboarding');
     }, 300);
   };
 
   return (
-    <div className="min-h-screen bg-white relative flex items-center justify-center">
+    <div className="min-h-screen bg-black relative flex items-center justify-center">
       <div className="w-full max-w-[480px] mx-auto px-4">
         <div className="flex justify-center mb-8 items-center gap-3">
           <Image
             src="/logo.png"
-            alt="MED1 Logo"
+            alt="Logo"
             width={48}
             height={48}
             priority
-            className="h-12 w-12"
+            className="h-12 w-12 brightness-0 invert"
           />
-          <span className="text-3xl font-semibold text-[#5c5b60]">MED1</span>
         </div>
         
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="bg-white rounded-xl p-8 border border-gray-200 shadow-sm"
+          className="bg-zinc-900/50 backdrop-blur-sm rounded-xl p-8 border border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
         >
           <div className="text-center space-y-6">
-            <h1 className="text-2xl font-semibold text-gray-800">
+            <h1 className="text-2xl font-semibold text-zinc-100">
               Libere seu acesso
             </h1>
             
-            <p className="text-gray-600 leading-relaxed">
-              Para ter acesso a MED1 é necessário conversar com nosso time e iniciar o Onboarding, nossa solução é personalizada para sua situação atual e nosso foco é no mínimo duplicar seu faturamento.
+            <p className="text-zinc-400 leading-relaxed">
+              Para ter acesso é necessário conversar com nosso time e iniciar o Onboarding, nossa solução é personalizada para sua situação atual e nosso foco é no mínimo duplicar seu faturamento.
             </p>
             
-            <p className="text-gray-600 leading-relaxed">
+            <p className="text-zinc-400 leading-relaxed">
               O Onboarding é feito por ordem de chegada. Para agendar o seu, clique no botão abaixo e preencha os dados.
             </p>
             
             <Button 
-              className="w-full bg-[#0070df] text-white hover:bg-[#0070df]/90 transition-colors border-none rounded-full"
+              className="w-full bg-zinc-800 text-zinc-100 hover:bg-zinc-700 transition-colors border-none rounded-full"
               onClick={handleContinue}
               disabled={isAnimating}
             >
@@ -66,7 +65,7 @@ export default function BloqueadoPage() {
           <div className="mt-6 text-center">
             <Link 
               href="/auth/signin" 
-              className="text-gray-600 hover:text-black text-sm"
+              className="text-zinc-500 hover:text-zinc-300 text-sm"
             >
               Voltar para o login
             </Link>

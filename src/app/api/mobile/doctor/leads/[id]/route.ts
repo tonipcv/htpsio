@@ -98,7 +98,6 @@ export async function PUT(
       data: {
         name: data.name || undefined,
         phone: data.phone || undefined,
-        interest: data.interest !== undefined ? data.interest : undefined,
         indicationId: data.indicationId !== undefined ? data.indicationId : undefined,
         status: data.status || undefined,
         potentialValue: data.potentialValue !== undefined ? parseFloat(String(data.potentialValue)) : undefined,

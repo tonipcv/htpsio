@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { randomUUID } from 'crypto';
 
 // POST - Criar nova recompensa
 export async function POST(req: NextRequest) {
@@ -68,14 +69,16 @@ export async function POST(req: NextRequest) {
     // Criar recompensa
     const reward = await prisma.referralReward.create({
       data: {
+        id: randomUUID(),
         referralId,
         type,
         title,
         description,
         unlockValue,
         unlockType,
-        pageId: type === 'PAGE' ? pageId : null,
-        textContent: type === 'TEXT' ? textContent : null,
+        pageId,
+        textContent,
+        updatedAt: new Date()
       }
     });
 
@@ -117,22 +120,37 @@ export async function GET(req: NextRequest) {
           }
         }
       },
-      include: {
-        page: {
-          select: {
-            title: true
-          }
-        }
-      },
       orderBy: {
         unlockValue: 'asc'
       }
     });
 
+    // Para recompensas do tipo PAGE, buscar os títulos das páginas
+    const pageIds = rewards
+      .filter(reward => reward.type === 'PAGE' && reward.pageId)
+      .map(reward => reward.pageId as string);
+
+    const pages = pageIds.length > 0
+      ? await prisma.page.findMany({
+          where: {
+            id: {
+              in: pageIds
+            }
+          },
+          select: {
+            id: true,
+            title: true
+          }
+        })
+      : [];
+
+    // Criar um mapa de id da página para título
+    const pageTitleMap = new Map(pages.map(page => [page.id, page.title]));
+
     // Formatar resposta
     const formattedRewards = rewards.map(reward => ({
       ...reward,
-      pageName: reward.type === 'PAGE' ? reward.page?.title : null
+      pageName: reward.type === 'PAGE' && reward.pageId ? pageTitleMap.get(reward.pageId) : null
     }));
 
     return NextResponse.json(formattedRewards);

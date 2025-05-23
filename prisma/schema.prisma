@@ -6,6 +6,7 @@ datasource db {
   provider     = "postgresql"
   url          = env("DATABASE_URL")
   relationMode = "prisma"
+  directUrl    = env("DATABASE_URL")
 }
 
 model Account {
@@ -181,6 +182,7 @@ model Page {
   socialLinks  SocialLink[]
   user         User     @relation(fields: [userId], references: [id])
   referrals    PatientReferral[]
+  rewards      ReferralReward[]
 
   @@index([userId])
 }
@@ -228,6 +230,11 @@ model Patient {
   resetTokenExpiry  DateTime?
   hasActiveProducts Boolean   @default(false)
   referrals         PatientReferral[]
+  user              User?     @relation(fields: [userId], references: [id])
+  lead              leads?    @relation(fields: [leadId], references: [id])
+
+  @@index([userId])
+  @@index([leadId])
 }
 
 model PatientReferral {
@@ -278,6 +285,7 @@ model ReferralReward {
   updatedAt   DateTime
   serviceId   String?
   referral    PatientReferral @relation(fields: [referralId], references: [id])
+  page        Page?          @relation(fields: [pageId], references: [id])
 
   @@index([pageId])
   @@index([referralId])
@@ -327,6 +335,7 @@ model User {
   indications           Indication[]
   pages                 Page[]
   pipelines            pipelines[]
+  patients             Patient[]
 
   @@index([email], map: "user_email_idx")
   @@index([slug], map: "user_slug_idx")
@@ -364,6 +373,7 @@ model leads {
   indication      Indication? @relation(fields: [indicationId], references: [id])
   user            User       @relation(fields: [user_id], references: [id])
   pipeline        pipelines? @relation(fields: [pipelineId], references: [id])
+  patient         Patient?
 
   @@index([createdAt])
   @@index([indicationId])

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { randomUUID } from 'crypto';
 
 export async function GET(
   request: NextRequest,
@@ -40,6 +41,7 @@ export async function GET(
       // Registrar visualização
       await prisma.event.create({
         data: {
+          id: randomUUID(),
           type: 'PAGE_VIEW',
           userId: user.id,
           ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
@@ -65,6 +67,7 @@ export async function GET(
       // Registrar visualização
       await prisma.event.create({
         data: {
+          id: randomUUID(),
           type: 'LINK_VIEW',
           userId: user.id,
           indicationId: indication.id,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { randomUUID } from 'crypto';
 
 // Listar todas as opções de interesse do usuário atual
 export async function GET(req: NextRequest) {
@@ -56,11 +57,13 @@ export async function POST(req: NextRequest) {
     
     const newOption = await prisma.interestOption.create({
       data: {
+        id: randomUUID(),
         label,
         value,
         redirectUrl,
         isDefault: !!isDefault,
-        userId: session.user.id
+        userId: session.user.id,
+        updatedAt: new Date()
       }
     });
     

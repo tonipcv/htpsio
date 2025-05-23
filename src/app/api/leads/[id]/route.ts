@@ -171,7 +171,7 @@ export async function PATCH(
       }
     }
 
-    let appointmentDateTime = null;
+    let appointmentDateTime: Date | null = null;
     if (appointmentDate && appointmentTime) {
       appointmentDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
     }

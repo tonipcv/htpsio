@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verify } from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
+import { randomUUID } from 'crypto';
 
 // Regex para detectar URLs no formato /{userSlug}/{referralSlug}
 const REFERRAL_REGEX = /^\/([^\/]+)\/([^\/]+)$/;
@@ -106,6 +107,7 @@ export async function middleware(req: NextRequest) {
             // Registrar evento de visualização
             await prisma.event.create({
               data: {
+                id: randomUUID(),
                 type: 'REFERRAL_VIEW',
                 userId: user.id,
                 ip: req.headers.get('x-forwarded-for') || 'unknown',

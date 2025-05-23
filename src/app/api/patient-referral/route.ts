@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { randomUUID } from 'crypto';
 
 // POST - Criar nova referência
 export async function POST(req: NextRequest) {
@@ -70,9 +71,11 @@ export async function POST(req: NextRequest) {
     // Criar referência
     const referral = await prisma.patientReferral.create({
       data: {
+        id: randomUUID(),
         slug: nanoid(10),
         pageId,
         patientId,
+        updatedAt: new Date()
       }
     });
 

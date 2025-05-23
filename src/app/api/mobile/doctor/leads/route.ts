@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { validateToken } from "../../middleware";
 import { getToken } from "next-auth/jwt";
 import { headers } from "next/headers";
+import { randomUUID } from "crypto";
 
 const prisma = new PrismaClient();
 
@@ -84,7 +85,6 @@ export async function POST(req: NextRequest) {
     const {
       name,
       phone,
-      interest,
       indicationId,
       status,
       potentialValue,
@@ -126,7 +126,6 @@ export async function POST(req: NextRequest) {
         where: { id: existingLead.id },
         data: {
           name,
-          interest: interest || null,
           indicationId: indicationId || null,
           status: status || existingLead.status,
           potentialValue: potentialValue ? parseFloat(potentialValue) : null,
@@ -144,9 +143,9 @@ export async function POST(req: NextRequest) {
       // Create new lead
       lead = await prisma.leads.create({
         data: {
+          id: randomUUID(),
           name,
           phone,
-          interest: interest || null,
           user_id: token.sub,
           indicationId: indicationId || null,
           status: status || "Novo",
@@ -165,6 +164,7 @@ export async function POST(req: NextRequest) {
     // Log the event with proper fields
     await prisma.event.create({
       data: {
+        id: randomUUID(),
         type: eventType,
         userId: token.sub,
         indicationId: indicationId || null,

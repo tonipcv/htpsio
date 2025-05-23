@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import slugify from 'slugify';
 import { getToken } from "next-auth/jwt";
 import { nanoid } from "nanoid";
+import { randomUUID } from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -178,6 +179,7 @@ export async function POST(req: NextRequest) {
     // Cria a indicação
     const indication = await prisma.indication.create({
       data: {
+        id: randomUUID(),
         slug,
         userId: token.sub as string,
         patientId,
@@ -190,6 +192,7 @@ export async function POST(req: NextRequest) {
     // Registra o evento de criação da indicação
     await prisma.event.create({
       data: {
+        id: randomUUID(),
         type: "INDICATION_CREATED",
         userId: token.sub as string,
         indicationId: indication.id,

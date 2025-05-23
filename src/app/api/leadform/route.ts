@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
+import { randomUUID } from 'crypto';
 
 // Schema para validação dos dados
 const leadFormSchema = z.object({
@@ -92,6 +93,7 @@ export async function POST(request: Request) {
       try {
         const leadForm = await db.leadForm.create({
           data: {
+            id: randomUUID(),
             name: body.name,
             email: body.email,
             whatsapp: body.whatsapp,
@@ -100,7 +102,8 @@ export async function POST(request: Request) {
             employees: body.employees,
             revenue: body.revenue,
             useTechnology: body.useTechnology,
-            status: "Novo"
+            status: "Novo",
+            updatedAt: new Date()
           },
         });
         

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { randomUUID } from 'crypto';
 
 // POST - Registrar novo lead via referência
 export async function POST(
@@ -10,7 +11,7 @@ export async function POST(
 ) {
   try {
     const { slug } = params;
-    const { name, phone, email } = await req.json();
+    const { name, phone, email, utmSource, utmMedium, utmCampaign, utmTerm, utmContent } = await req.json();
 
     // Validar dados obrigatórios
     if (!name || !phone) {
@@ -43,15 +44,20 @@ export async function POST(
     // Criar lead e atualizar contadores em uma transação
     const result = await prisma.$transaction(async (tx) => {
       // Criar lead
-      const lead = await tx.lead.create({
+      const lead = await tx.leads.create({
         data: {
-          id: nanoid(),
+          id: randomUUID(),
           name,
-          phone,
           email,
-          userId: referral.page.userId,
-          source: 'referral',
-          status: 'Novo'
+          phone,
+          user_id: referral.page.userId,
+          indicationId: referral.id,
+          status: 'Novo',
+          utmSource,
+          utmMedium,
+          utmCampaign,
+          utmTerm,
+          utmContent
         }
       });
 
@@ -64,11 +70,13 @@ export async function POST(
         }
       });
 
-      // Incrementar contador de leads
-      const { leads } = await tx.patientReferral.update({
+      // Atualizar contagem de leads na referência
+      const updatedReferral = await tx.patientReferral.update({
         where: { id: referral.id },
         data: {
-          leads: { increment: 1 }
+          leads: {
+            increment: 1
+          }
         },
         select: {
           leads: true
@@ -77,7 +85,7 @@ export async function POST(
 
       // Desbloquear recompensas que atingiram a meta
       if (rewards.length > 0) {
-        const rewardsToUnlock = rewards.filter(reward => leads >= reward.unlockValue);
+        const rewardsToUnlock = rewards.filter(reward => updatedReferral.leads >= reward.unlockValue);
         
         if (rewardsToUnlock.length > 0) {
           await tx.referralReward.updateMany({

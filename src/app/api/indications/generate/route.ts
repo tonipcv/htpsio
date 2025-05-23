@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { randomUUID } from 'crypto';
 
 /**
  * @swagger
@@ -110,6 +111,7 @@ export async function POST(req: NextRequest) {
     // Registrar evento de geração de link (opcional)
     await prisma.event.create({
       data: {
+        id: randomUUID(),
         userId: session.user.id,
         indicationId,
         type: 'link_generated',

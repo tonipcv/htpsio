@@ -81,10 +81,9 @@ export default function InsideSalesPage() {
       setIsSubmitting(true);
       setSubmitError('');
       
-      const response = await fetch('/api/form-submission', {
+      const response = await fetch('/api/inside-sales', {
         method: 'POST',
         headers: {
-          'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(formData)
@@ -112,8 +111,8 @@ export default function InsideSalesPage() {
   };
 
   const renderStep = () => {
-    const commonInputClasses = "bg-white text-black w-full";
-    const commonButtonClasses = "w-full bg-[#0070df] text-white hover:bg-[#0070df]/90 transition-colors border-none rounded-full mt-6";
+    const commonInputClasses = "bg-zinc-800/50 border-zinc-700 text-zinc-100 w-full placeholder:text-zinc-500";
+    const commonButtonClasses = "w-full bg-zinc-800 text-zinc-100 hover:bg-zinc-700 transition-colors border-none rounded-full mt-6";
 
     switch (step) {
       case 0:
@@ -125,11 +124,11 @@ export default function InsideSalesPage() {
             exit={{ opacity: 0, y: -20 }}
             className="text-center space-y-6"
           >
-            <h1 className="text-2xl font-semibold text-gray-800">
+            <h1 className="text-2xl font-semibold text-zinc-100">
               Agende sua demonstração gratuita
             </h1>
-            <p className="text-gray-600">
-              Conheça como o Med1 pode aumentar em até 3x o número de pacientes do seu consultório
+            <p className="text-zinc-400">
+              Conheça como podemos aumentar em até 3x o número de clientes do seu negócio
             </p>
             <Button 
               className={commonButtonClasses}
@@ -151,10 +150,10 @@ export default function InsideSalesPage() {
             className="space-y-6"
           >
             <div className="text-center">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              <h2 className="text-2xl font-semibold text-zinc-100 mb-4">
                 Qual é o seu nome?
               </h2>
-              <p className="text-gray-600">Nos diga como devemos te chamar</p>
+              <p className="text-zinc-400">Nos diga como devemos te chamar</p>
             </div>
             <Input 
               type="text" 
@@ -187,10 +186,10 @@ export default function InsideSalesPage() {
             className="space-y-6"
           >
             <div className="text-center">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              <h2 className="text-2xl font-semibold text-zinc-100 mb-4">
                 Qual é o seu email?
               </h2>
-              <p className="text-gray-600">Para enviarmos informações importantes</p>
+              <p className="text-zinc-400">Para enviarmos informações importantes</p>
             </div>
             <Input 
               type="email" 
@@ -223,10 +222,10 @@ export default function InsideSalesPage() {
             className="space-y-6"
           >
             <div className="text-center">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              <h2 className="text-2xl font-semibold text-zinc-100 mb-4">
                 Qual é o seu WhatsApp?
               </h2>
-              <p className="text-gray-600">Para agilizar nossa comunicação</p>
+              <p className="text-zinc-400">Para agilizar nossa comunicação</p>
             </div>
             <Input 
               type="tel" 
@@ -259,10 +258,10 @@ export default function InsideSalesPage() {
             className="space-y-6"
           >
             <div className="text-center">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              <h2 className="text-2xl font-semibold text-zinc-100 mb-4">
                 Qual é o seu Instagram?
               </h2>
-              <p className="text-gray-600">Para conhecermos melhor seu trabalho</p>
+              <p className="text-zinc-400">Para conhecermos melhor seu trabalho</p>
             </div>
             <Input 
               type="text" 
@@ -295,16 +294,18 @@ export default function InsideSalesPage() {
             className="space-y-6"
           >
             <div className="text-center">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              <h2 className="text-2xl font-semibold text-zinc-100 mb-4">
                 Qual é sua área de atuação?
               </h2>
             </div>
             <div className="grid grid-cols-1 gap-3">
-              {['Clínica', 'Consultório', 'Hospital', 'Outro'].map((option) => (
+              {['Saúde', 'Educação', 'Tecnologia', 'Serviços', 'Outro'].map((option) => (
                 <Button
                   key={option}
                   variant="outline"
-                  className={`w-full p-4 ${formData.area === option ? 'bg-blue-50 border-blue-500' : ''}`}
+                  className={`w-full p-4 bg-zinc-800/50 border-zinc-700 text-zinc-100 hover:bg-zinc-700 ${
+                    formData.area === option ? 'bg-zinc-700 border-zinc-600' : ''
+                  }`}
                   onClick={() => handleSelectChange(option, 'area')}
                 >
                   {option}
@@ -324,16 +325,18 @@ export default function InsideSalesPage() {
             className="space-y-6"
           >
             <div className="text-center">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              <h2 className="text-2xl font-semibold text-zinc-100 mb-4">
                 Quantos funcionários você tem?
               </h2>
             </div>
             <div className="grid grid-cols-1 gap-3">
-              {['1-5', '6-10', '11-20', '21+'].map((option) => (
+              {['1-5', '6-20', '21-50', '51-200', '200+'].map((option) => (
                 <Button
                   key={option}
                   variant="outline"
-                  className={`w-full p-4 ${formData.employees === option ? 'bg-blue-50 border-blue-500' : ''}`}
+                  className={`w-full p-4 bg-zinc-800/50 border-zinc-700 text-zinc-100 hover:bg-zinc-700 ${
+                    formData.employees === option ? 'bg-zinc-700 border-zinc-600' : ''
+                  }`}
                   onClick={() => handleSelectChange(option, 'employees')}
                 >
                   {option}
@@ -353,7 +356,7 @@ export default function InsideSalesPage() {
             className="space-y-6"
           >
             <div className="text-center">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              <h2 className="text-2xl font-semibold text-zinc-100 mb-4">
                 Qual seu faturamento mensal?
               </h2>
             </div>
@@ -367,7 +370,9 @@ export default function InsideSalesPage() {
                 <Button
                   key={option}
                   variant="outline"
-                  className={`w-full p-4 ${formData.revenue === option ? 'bg-blue-50 border-blue-500' : ''}`}
+                  className={`w-full p-4 bg-zinc-800/50 border-zinc-700 text-zinc-100 hover:bg-zinc-700 ${
+                    formData.revenue === option ? 'bg-zinc-700 border-zinc-600' : ''
+                  }`}
                   onClick={() => handleSelectChange(option, 'revenue')}
                 >
                   {option}
@@ -387,8 +392,8 @@ export default function InsideSalesPage() {
             className="space-y-6"
           >
             <div className="text-center">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-                Você já usa algum software médico?
+              <h2 className="text-2xl font-semibold text-zinc-100 mb-4">
+                Você já usa alguma tecnologia similar?
               </h2>
             </div>
             <div className="grid grid-cols-1 gap-3">
@@ -396,7 +401,9 @@ export default function InsideSalesPage() {
                 <Button
                   key={option}
                   variant="outline"
-                  className={`w-full p-4 ${formData.useTechnology === option ? 'bg-blue-50 border-blue-500' : ''}`}
+                  className={`w-full p-4 bg-zinc-800/50 border-zinc-700 text-zinc-100 hover:bg-zinc-700 ${
+                    formData.useTechnology === option ? 'bg-zinc-700 border-zinc-600' : ''
+                  }`}
                   onClick={() => {
                     handleSelectChange(option, 'useTechnology');
                     setTimeout(submitFormData, 500);
@@ -418,13 +425,13 @@ export default function InsideSalesPage() {
             exit={{ opacity: 0, y: -20 }}
             className="text-center space-y-6"
           >
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CalendarIcon className="h-8 w-8 text-green-600" />
+            <div className="w-16 h-16 bg-zinc-800/50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CalendarIcon className="h-8 w-8 text-zinc-100" />
             </div>
-            <h2 className="text-2xl font-semibold text-gray-800">
+            <h2 className="text-2xl font-semibold text-zinc-100">
               Agendamento realizado!
             </h2>
-            <p className="text-gray-600">
+            <p className="text-zinc-400">
               Em breve nossa equipe entrará em contato para agendar sua demonstração.
             </p>
             <Link href="/auth/signin">
@@ -443,27 +450,26 @@ export default function InsideSalesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white relative flex items-center justify-center">
+    <div className="min-h-screen bg-black relative flex items-center justify-center">
       <div className="w-full max-w-[480px] mx-auto px-4">
-        <div className="flex justify-center mb-8 items-center gap-3">
+        <div className="flex justify-center mb-8 items-center">
           <Image
             src="/logo.png"
-            alt="MED1 Logo"
+            alt="Logo"
             width={48}
             height={48}
             priority
-            className="h-12 w-12"
+            className="h-12 w-12 brightness-0 invert"
           />
-          <span className="text-3xl font-semibold text-[#5c5b60]">MED1</span>
         </div>
         
-        <div className="bg-white rounded-xl p-8 border border-gray-200 shadow-sm">
+        <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl p-8 border border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
           <AnimatePresence mode="wait">
             {renderStep()}
           </AnimatePresence>
 
           {submitError && (
-            <div className="mt-4 text-red-600 text-sm text-center">
+            <div className="mt-4 text-red-400 text-sm text-center">
               {submitError}
             </div>
           )}

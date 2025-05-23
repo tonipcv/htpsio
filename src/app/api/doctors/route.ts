@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { parse } from 'csv-parse/sync';
 import { hash } from 'bcryptjs';
+import { randomUUID } from 'crypto';
 
 // GET /api/doctors - Lista todos os médicos
 export async function GET(request: NextRequest) {
@@ -92,6 +93,7 @@ export async function POST(request: NextRequest) {
           // Criar o novo médico
           await prisma.user.create({
             data: {
+              id: randomUUID(),
               name: record.name,
               email: record.email,
               specialty: record.specialty || null,
@@ -148,6 +150,7 @@ export async function POST(request: NextRequest) {
       // Criar o novo médico
       const newDoctor = await prisma.user.create({
         data: {
+          id: randomUUID(),
           name: doctorData.name,
           email: doctorData.email,
           specialty: doctorData.specialty || null,

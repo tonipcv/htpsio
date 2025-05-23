@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { randomUUID } from 'crypto';
 
 // POST - Adicionar um novo endereço
 export async function POST(
@@ -51,11 +52,13 @@ export async function POST(
     // Criar o novo endereço
     const newAddress = await prisma.pageAddress.create({
       data: {
+        id: randomUUID(),
         pageId: params.pageId,
         name,
         address,
-        isDefault: isDefault ?? false,
-      },
+        isDefault,
+        updatedAt: new Date()
+      }
     });
 
     return NextResponse.json(newAddress);
@@ -85,17 +88,21 @@ export async function GET(
       where: {
         id: params.pageId,
         userId: session.user.id,
-      },
-      include: {
-        addresses: true,
-      },
+      }
     });
 
     if (!page) {
       return NextResponse.json({ error: 'Page not found' }, { status: 404 });
     }
 
-    return NextResponse.json(page.addresses);
+    // Buscar endereços da página
+    const addresses = await prisma.pageAddress.findMany({
+      where: {
+        pageId: params.pageId
+      }
+    });
+
+    return NextResponse.json(addresses);
   } catch (error) {
     console.error('Error fetching addresses:', error);
     return NextResponse.json(
@@ -153,30 +160,28 @@ export async function PUT(
       updatedAddresses[0].isDefault = true;
     }
 
-    // Buscar endereços atuais
-    const currentAddresses = await prisma.$queryRaw`
-      SELECT * FROM "PageAddress" WHERE "pageId" = ${params.pageId}
-    `;
-    
     // Excluir endereços atuais
-    await prisma.$executeRaw`
-      DELETE FROM "PageAddress" WHERE "pageId" = ${params.pageId}
-    `;
+    await prisma.pageAddress.deleteMany({
+      where: {
+        pageId: params.pageId
+      }
+    });
     
     // Criar novos endereços
-    for (const addr of updatedAddresses) {
-      await prisma.$executeRaw`
-        INSERT INTO "PageAddress" 
-        ("id", "pageId", "name", "address", "isDefault", "createdAt", "updatedAt")
-        VALUES 
-        (gen_random_uuid(), ${params.pageId}, ${addr.name}, ${addr.address}, ${addr.isDefault}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      `;
-    }
-    
-    // Buscar endereços atualizados
-    const newAddresses = await prisma.$queryRaw`
-      SELECT * FROM "PageAddress" WHERE "pageId" = ${params.pageId}
-    `;
+    const newAddresses = await Promise.all(
+      updatedAddresses.map(addr => 
+        prisma.pageAddress.create({
+          data: {
+            id: randomUUID(),
+            pageId: params.pageId,
+            name: addr.name,
+            address: addr.address,
+            isDefault: addr.isDefault || false,
+            updatedAt: new Date()
+          }
+        })
+      )
+    );
     
     return NextResponse.json(newAddresses);
   } catch (error) {

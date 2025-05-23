@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { randomUUID } from 'crypto';
 
 // Código de teste para API simplificada
 const mockData = [
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
       console.log('💾 Tentando salvar lead no banco de dados...');
       const lead = await prisma.insideSalesLead.create({
         data: {
+          id: randomUUID(),
           name,
           email,
           whatsapp,
