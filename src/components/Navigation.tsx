@@ -102,7 +102,7 @@ export default function Navigation() {
         },
         {
           href: '/dashboard/pacientes',
-          label: 'Pacientes',
+          label: 'Clientes',
           icon: HeartIcon,
           description: 'Gerenciar pacientes'
         },
@@ -267,30 +267,6 @@ export default function Navigation() {
 
       {/* Desktop Spacer */}
       <div className="hidden lg:block w-52 flex-shrink-0" />
-
-      {/* WhatsApp Float Button */}
-      <a 
-        href="https://wa.me/5511976638147" 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="group fixed bottom-20 right-4 lg:bottom-8 lg:right-8 z-50"
-      >
-        <div className="relative">
-          {/* Profile Image */}
-          <div className="rounded-full overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 w-14 h-14 lg:w-16 lg:h-16 ring-2 ring-zinc-800 bg-zinc-900">
-            <Image
-              src="/toni.jpeg"
-              alt="Contact Toni"
-              width={64}
-              height={64}
-              className="object-cover w-full h-full hover:scale-110 transition-transform duration-300"
-              priority
-            />
-            {/* Online Indicator */}
-            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full ring-2 ring-zinc-800" />
-          </div>
-        </div>
-      </a>
     </>
   );
 } 
