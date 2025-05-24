@@ -56,7 +56,7 @@ export default function Home() {
             </Button>
           </Link>
           
-          <a href="https://magic.htps.io/create" target="_blank" rel="noopener noreferrer" className="block">
+          <a href="https://magic.htps.io/demo" target="_blank" rel="noopener noreferrer" className="block">
             <Button 
               variant="outline"
               className="w-full py-5 bg-transparent hover:bg-white/5 text-zinc-400 hover:text-white border-white/10 rounded-lg text-sm font-light tracking-wide transition-all"
