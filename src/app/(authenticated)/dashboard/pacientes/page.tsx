@@ -59,15 +59,15 @@ interface Patient {
   };
 }
 
-export default function PacientesPage() {
+export default function ClientesPage() {
   const { data: session } = useSession();
-  const [patients, setPatients] = useState<Patient[]>([]);
+  const [clients, setClients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
-  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const [editingClient, setEditingClient] = useState<Patient | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [viewingPatient, setViewingPatient] = useState<Patient | null>(null);
+  const [viewingClient, setViewingClient] = useState<Patient | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -89,17 +89,17 @@ export default function PacientesPage() {
     medicalNotes: "",
     hasPortalAccess: false
   });
-  const [selectedPatients, setSelectedPatients] = useState<string[]>([]);
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [sendingPortalConfig, setSendingPortalConfig] = useState<{ [key: string]: boolean }>({});
   const [portalConfigSent, setPortalConfigSent] = useState<{ [key: string]: boolean }>({});
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
+  const [clientToDelete, setClientToDelete] = useState<Patient | null>(null);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [isCreateStatusOpen, setIsCreateStatusOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const router = useRouter();
 
-  const fetchPatients = async () => {
+  const fetchClients = async () => {
     if (!session?.user?.id) return;
 
     try {
@@ -108,22 +108,22 @@ export default function PacientesPage() {
       
       if (response.ok) {
         const data = await response.json();
-        setPatients(data || []);
+        setClients(data || []);
       } else {
-        console.error('Erro ao buscar pacientes:', response.statusText);
-        setPatients([]);
+        console.error('Erro ao buscar clientes:', response.statusText);
+        setClients([]);
       }
     } catch (error) {
-      console.error('Erro ao buscar pacientes:', error);
-      setPatients([]);
+      console.error('Erro ao buscar clientes:', error);
+      setClients([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch patients data when session changes
+  // Fetch clients data when session changes
   useEffect(() => {
-    fetchPatients();
+    fetchClients();
   }, [session]);
 
   // Cleanup effect for dropdowns
@@ -170,8 +170,8 @@ export default function PacientesPage() {
   // useEffect to clean up state when edit/view modals are closed
   useEffect(() => {
     if (!isViewModalOpen && !isEditModalOpen) {
-      setViewingPatient(null);
-      setEditingPatient(null);
+      setViewingClient(null);
+      setEditingClient(null);
       setEditFormData({
         name: "",
         email: "",
@@ -223,9 +223,9 @@ export default function PacientesPage() {
     }
   };
 
-  const filteredPatients = patients.filter(patient => {
+  const filteredClients = clients.filter(client => {
     // Filter by status if not "all"
-    if (activeTab !== "all" && patient.lead.status !== activeTab) {
+    if (activeTab !== "all" && client.lead.status !== activeTab) {
       return false;
     }
     
@@ -233,36 +233,36 @@ export default function PacientesPage() {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       return (
-        patient.name.toLowerCase().includes(term) ||
-        patient.email.toLowerCase().includes(term) ||
-        patient.phone.toLowerCase().includes(term)
+        client.name.toLowerCase().includes(term) ||
+        client.email.toLowerCase().includes(term) ||
+        client.phone.toLowerCase().includes(term)
       );
     }
     
     return true;
   });
 
-  const handleViewPatient = (patient: Patient) => {
-    setViewingPatient(patient);
+  const handleViewClient = (client: Patient) => {
+    setViewingClient(client);
     setIsViewModalOpen(true);
   };
 
-  const handleEditPatient = (patient: Patient) => {
-    setEditingPatient(patient);
+  const handleEditClient = (client: Patient) => {
+    setEditingClient(client);
     setEditFormData({
-      name: patient.name,
-      email: patient.email,
-      phone: patient.phone,
-      status: patient.lead.status,
-      appointmentDate: patient.lead.appointmentDate 
-        ? new Date(patient.lead.appointmentDate).toISOString().slice(0, 16)
+      name: client.name,
+      email: client.email,
+      phone: client.phone,
+      status: client.lead.status,
+      appointmentDate: client.lead.appointmentDate 
+        ? new Date(client.lead.appointmentDate).toISOString().slice(0, 16)
         : "",
-      medicalNotes: patient.lead.medicalNotes || ""
+      medicalNotes: client.lead.medicalNotes || ""
     });
     setIsEditModalOpen(true);
   };
 
-  const handleCreatePatient = () => {
+  const handleCreateClient = () => {
     setCreateFormData({
       name: "",
       email: "",
@@ -310,8 +310,8 @@ export default function PacientesPage() {
     }));
   };
 
-  const handleUpdatePatient = async () => {
-    if (!editingPatient) return;
+  const handleUpdateClient = async () => {
+    if (!editingClient) return;
 
     // Validar dados obrigatórios
     if (!editFormData.name || !editFormData.email || !editFormData.phone) {
@@ -325,7 +325,7 @@ export default function PacientesPage() {
 
     setIsSaving(true);
     try {
-      const response = await fetch(`/api/patients/${editingPatient.id}`, {
+      const response = await fetch(`/api/patients/${editingClient.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -345,28 +345,28 @@ export default function PacientesPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Atualiza o paciente na lista local
-        setPatients(prevPatients => 
-          prevPatients.map(p => 
-            p.id === editingPatient.id ? data : p
+        // Atualiza o cliente na lista local
+        setClients(prevClients => 
+          prevClients.map(c => 
+            c.id === editingClient.id ? data : c
           )
         );
         
         toast({
           title: "Sucesso",
-          description: "As informações do paciente foram atualizadas com sucesso.",
+          description: "As informações do cliente foram atualizadas com sucesso.",
         });
         
         // Fechando o modal depois de atualizar os dados
         setIsEditModalOpen(false);
       } else {
-        throw new Error(data.error || 'Erro ao atualizar paciente');
+        throw new Error(data.error || 'Erro ao atualizar cliente');
       }
     } catch (error) {
-      console.error('Erro ao atualizar paciente:', error);
+      console.error('Erro ao atualizar cliente:', error);
       toast({
         title: "Erro",
-        description: error instanceof Error ? error.message : "Não foi possível atualizar o paciente. Tente novamente.",
+        description: error instanceof Error ? error.message : "Não foi possível atualizar o cliente. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -374,7 +374,7 @@ export default function PacientesPage() {
     }
   };
 
-  const handleCreateNewPatient = async () => {
+  const handleCreateNewClient = async () => {
     // Validar campos obrigatórios - only validate required fields (name, email, phone)
     if (!createFormData.name || !createFormData.email || !createFormData.phone) {
       toast({
@@ -421,12 +421,12 @@ export default function PacientesPage() {
       console.log('API response:', { status: response.status, data });
 
       if (response.ok) {
-        // Adiciona o novo paciente à lista local
-        setPatients(prevPatients => [data.data, ...prevPatients]);
+        // Adiciona o novo cliente à lista local
+        setClients(prevClients => [data.data, ...prevClients]);
         
         toast({
-          title: "Paciente criado",
-          description: "O novo paciente foi criado com sucesso.",
+          title: "Cliente criado",
+          description: "O novo cliente foi criado com sucesso.",
         });
         
         // Fechar modal
@@ -437,16 +437,16 @@ export default function PacientesPage() {
           // Conflito - email duplicado
           toast({
             title: "Email já cadastrado",
-            description: "Já existe um paciente cadastrado com este email.",
+            description: "Já existe um cliente cadastrado com este email.",
             variant: "destructive",
           });
         } else {
           // Outros erros da API
-        throw new Error(data.error || 'Erro ao criar paciente');
+        throw new Error(data.error || 'Erro ao criar cliente');
         }
       }
     } catch (error) {
-      console.error('Erro ao criar paciente:', error);
+      console.error('Erro ao criar cliente:', error);
       
       // Exibir a mensagem de erro (se já não foi exibida pelo bloco acima)
       const errorMessage = error instanceof Error ? error.message : "";
@@ -455,7 +455,7 @@ export default function PacientesPage() {
       if (!errorMessage.includes("Email já cadastrado")) {
       toast({
         title: "Erro",
-          description: errorMessage || "Não foi possível criar o paciente. Tente novamente.",
+          description: errorMessage || "Não foi possível criar o cliente. Tente novamente.",
         variant: "destructive",
       });
       }
@@ -464,14 +464,14 @@ export default function PacientesPage() {
     }
   };
 
-  const handleSendPortalConfig = async (patient: Patient) => {
-    if (sendingPortalConfig[patient.id]) return;
+  const handleSendPortalConfig = async (client: Patient) => {
+    if (sendingPortalConfig[client.id]) return;
 
     try {
-      setSendingPortalConfig(prev => ({ ...prev, [patient.id]: true }));
-      setPortalConfigSent(prev => ({ ...prev, [patient.id]: false }));
+      setSendingPortalConfig(prev => ({ ...prev, [client.id]: true }));
+      setPortalConfigSent(prev => ({ ...prev, [client.id]: false }));
 
-      const response = await fetch(`/api/patients/${patient.id}/send-portal-config`, {
+      const response = await fetch(`/api/patients/${client.id}/send-portal-config`, {
         method: 'POST',
       });
 
@@ -480,7 +480,7 @@ export default function PacientesPage() {
           title: "E-mail enviado",
           description: "O e-mail de configuração do portal foi enviado com sucesso.",
         });
-        setPortalConfigSent(prev => ({ ...prev, [patient.id]: true }));
+        setPortalConfigSent(prev => ({ ...prev, [client.id]: true }));
       } else {
         const error = await response.json();
         throw new Error(error.message || 'Erro ao enviar e-mail');
@@ -492,45 +492,45 @@ export default function PacientesPage() {
         description: "Não foi possível enviar o e-mail de configuração. Tente novamente.",
         variant: "destructive",
       });
-      setPortalConfigSent(prev => ({ ...prev, [patient.id]: false }));
+      setPortalConfigSent(prev => ({ ...prev, [client.id]: false }));
     } finally {
-      setSendingPortalConfig(prev => ({ ...prev, [patient.id]: false }));
+      setSendingPortalConfig(prev => ({ ...prev, [client.id]: false }));
 
       // Reset o status de enviado após 3 segundos
       setTimeout(() => {
-        setPortalConfigSent(prev => ({ ...prev, [patient.id]: false }));
+        setPortalConfigSent(prev => ({ ...prev, [client.id]: false }));
       }, 3000);
     }
   };
 
-  const handleDeletePatient = async () => {
-    if (!patientToDelete) return;
+  const handleDeleteClient = async () => {
+    if (!clientToDelete) return;
 
     try {
-      const response = await fetch(`/api/patients/${patientToDelete.id}`, {
+      const response = await fetch(`/api/patients/${clientToDelete.id}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
-        // Remove o paciente da lista local
-        setPatients(prevPatients => prevPatients.filter(p => p.id !== patientToDelete.id));
+        // Remove o cliente da lista local
+        setClients(prevClients => prevClients.filter(c => c.id !== clientToDelete.id));
         
         toast({
           title: "Sucesso",
-          description: "Paciente excluído com sucesso.",
+          description: "Cliente excluído com sucesso.",
         });
         
         setIsDeleteModalOpen(false);
-        setPatientToDelete(null);
+        setClientToDelete(null);
       } else {
         const error = await response.json();
-        throw new Error(error.error || 'Erro ao excluir paciente');
+        throw new Error(error.error || 'Erro ao excluir cliente');
       }
     } catch (error) {
-      console.error('Erro ao excluir paciente:', error);
+      console.error('Erro ao excluir cliente:', error);
       toast({
         title: "Erro",
-        description: error instanceof Error ? error.message : "Não foi possível excluir o paciente. Tente novamente.",
+        description: error instanceof Error ? error.message : "Não foi possível excluir o cliente. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -542,7 +542,7 @@ export default function PacientesPage() {
 
   const handleImportComplete = () => {
     setIsImportModalOpen(false);
-    fetchPatients();
+    fetchClients();
   };
 
   // Update the import modal open handler to close dropdowns
@@ -557,7 +557,7 @@ export default function PacientesPage() {
       <div className="min-h-[100dvh] bg-black pt-20 pb-24 md:pt-12 md:pb-16 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="animate-spin rounded-full h-5 w-5 border border-zinc-700 border-t-zinc-400"></div>
-          <p className="text-xs text-zinc-500 tracking-[-0.03em] font-inter">Carregando pacientes...</p>
+          <p className="text-xs text-zinc-500 tracking-[-0.03em] font-inter">Carregando clientes...</p>
         </div>
       </div>
     );
@@ -571,8 +571,8 @@ export default function PacientesPage() {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
               <div>
-                <h1 className="text-lg md:text-xl font-bold text-white tracking-[-0.03em] font-inter">Pacientes</h1>
-                <p className="text-xs md:text-sm text-zinc-400 tracking-[-0.03em] font-inter">Gerencie seus pacientes</p>
+                <h1 className="text-lg md:text-xl font-bold text-white tracking-[-0.03em] font-inter">Clientes</h1>
+                <p className="text-xs md:text-sm text-zinc-400 tracking-[-0.03em] font-inter">Gerencie seus clientes</p>
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -583,9 +583,9 @@ export default function PacientesPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-zinc-900 border border-zinc-800">
-                  <DropdownMenuItem onClick={handleCreatePatient} className="cursor-pointer text-zinc-300 hover:bg-zinc-800 focus:bg-zinc-800">
+                  <DropdownMenuItem onClick={handleCreateClient} className="cursor-pointer text-zinc-300 hover:bg-zinc-800 focus:bg-zinc-800">
                     <DocumentTextIcon className="h-4 w-4 mr-2" />
-                    <span>Novo Paciente</span>
+                    <span>Novo Cliente</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleOpenImportModal} className="cursor-pointer text-zinc-300 hover:bg-zinc-800 focus:bg-zinc-800">
                     <TableCellsIcon className="h-4 w-4 mr-2" />
@@ -602,7 +602,7 @@ export default function PacientesPage() {
                   <div className="relative">
                     <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-500" />
                     <Input
-                      placeholder="Buscar pacientes..."
+                      placeholder="Buscar clientes..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10 h-11 bg-zinc-900/50 border-zinc-800 text-zinc-300 placeholder:text-zinc-500 focus:border-zinc-700 focus:ring-zinc-700"
@@ -646,35 +646,35 @@ export default function PacientesPage() {
               </div>
             </div>
 
-            {/* Patient List */}
+            {/* Client List */}
             <Card className="bg-zinc-900/50 border border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-300 rounded-2xl">
               <CardContent className="p-0">
                 {/* Mobile view */}
                 <div className="md:hidden divide-y divide-zinc-800">
-                  {filteredPatients.length === 0 ? (
+                  {filteredClients.length === 0 ? (
                     <div className="p-8 text-center">
                       <div className="mx-auto w-24 h-24 bg-zinc-800/50 rounded-full flex items-center justify-center mb-4">
                         <UserIcon className="h-12 w-12 text-zinc-500" />
                       </div>
-                      <h3 className="text-sm font-medium text-zinc-300 mb-1">Nenhum paciente encontrado</h3>
-                      <p className="text-sm text-zinc-500">Tente ajustar seus filtros ou adicione um novo paciente.</p>
+                      <h3 className="text-sm font-medium text-zinc-300 mb-1">Nenhum cliente encontrado</h3>
+                      <p className="text-sm text-zinc-500">Tente ajustar seus filtros ou adicione um novo cliente.</p>
                     </div>
                   ) : (
-                    filteredPatients.map((patient) => (
-                      <div key={patient.id} className="p-4 bg-zinc-900/50 hover:bg-zinc-800/50 transition-colors">
+                    filteredClients.map((client) => (
+                      <div key={client.id} className="p-4 bg-zinc-900/50 hover:bg-zinc-800/50 transition-colors">
                         <div className="flex items-start justify-between mb-3">
                           <div>
-                            <h3 className="font-medium text-zinc-300">{patient.name}</h3>
-                            <p className="text-sm text-zinc-500">{patient.email}</p>
+                            <h3 className="font-medium text-zinc-300">{client.name}</h3>
+                            <p className="text-sm text-zinc-500">{client.email}</p>
                           </div>
-                          {getStatusBadge(patient.lead?.status || 'novo')}
+                          {getStatusBadge(client.lead?.status || 'novo')}
                         </div>
                         <div className="flex gap-2">
                           <Button
                             variant="outline"
                             size="sm"
                             className="flex-1 h-9 bg-zinc-900/50 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-700"
-                            onClick={() => handleViewPatient(patient)}
+                            onClick={() => handleViewClient(client)}
                           >
                             <EyeIcon className="h-4 w-4 mr-1.5" />
                             Ver detalhes
@@ -683,7 +683,7 @@ export default function PacientesPage() {
                             variant="outline"
                             size="sm"
                             className="h-9 bg-zinc-900/50 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-700 px-2.5"
-                            onClick={() => handleEditPatient(patient)}
+                            onClick={() => handleEditClient(client)}
                           >
                             <PencilIcon className="h-4 w-4" />
                           </Button>
@@ -692,7 +692,7 @@ export default function PacientesPage() {
                             size="sm"
                             className="h-9 bg-zinc-900/50 border-red-800 text-red-300 hover:bg-red-800 hover:border-red-700 px-2.5"
                             onClick={() => {
-                              setPatientToDelete(patient);
+                              setClientToDelete(client);
                               setIsDeleteModalOpen(true);
                             }}
                           >
@@ -718,27 +718,27 @@ export default function PacientesPage() {
                       </tr>
                     </thead>
                     <tbody className="bg-transparent divide-y divide-zinc-800">
-                      {filteredPatients.length === 0 ? (
+                      {filteredClients.length === 0 ? (
                         <tr>
                           <td colSpan={6} className="px-6 py-12 text-center">
                             <div className="mx-auto w-24 h-24 bg-zinc-800/50 rounded-full flex items-center justify-center mb-4">
                               <UserIcon className="h-12 w-12 text-zinc-500" />
                             </div>
-                            <h3 className="text-sm font-medium text-zinc-300 mb-1">Nenhum paciente encontrado</h3>
-                            <p className="text-sm text-zinc-500">Tente ajustar seus filtros ou adicione um novo paciente.</p>
+                            <h3 className="text-sm font-medium text-zinc-300 mb-1">Nenhum cliente encontrado</h3>
+                            <p className="text-sm text-zinc-500">Tente ajustar seus filtros ou adicione um novo cliente.</p>
                           </td>
                         </tr>
                       ) : (
-                        filteredPatients.map((patient) => (
-                        <tr key={patient.id} className="hover:bg-zinc-800/50 transition-colors">
+                        filteredClients.map((client) => (
+                        <tr key={client.id} className="hover:bg-zinc-800/50 transition-colors">
                             <td className="py-4 px-6">
-                              <div className="font-medium text-zinc-300">{patient.name}</div>
+                              <div className="font-medium text-zinc-300">{client.name}</div>
                           </td>
-                            <td className="py-4 px-6 text-zinc-400">{patient.email}</td>
-                            <td className="py-4 px-6 text-zinc-400">{patient.phone}</td>
-                            <td className="py-4 px-6">{getStatusBadge(patient.lead?.status || 'novo')}</td>
+                            <td className="py-4 px-6 text-zinc-400">{client.email}</td>
+                            <td className="py-4 px-6 text-zinc-400">{client.phone}</td>
+                            <td className="py-4 px-6">{getStatusBadge(client.lead?.status || 'novo')}</td>
                             <td className="py-4 px-6 text-zinc-400">
-                              {format(new Date(patient.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                              {format(new Date(client.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                           </td>
                             <td className="py-4 px-6">
                             <div className="flex justify-end gap-2">
@@ -746,7 +746,7 @@ export default function PacientesPage() {
                                 variant="outline"
                                 size="sm"
                                 className="h-9 bg-zinc-900/50 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-700"
-                                onClick={() => handleViewPatient(patient)}
+                                onClick={() => handleViewClient(client)}
                               >
                                   <EyeIcon className="h-4 w-4 mr-1.5" />
                                   Ver detalhes
@@ -755,7 +755,7 @@ export default function PacientesPage() {
                                 variant="outline"
                                 size="sm"
                                 className="h-9 bg-zinc-900/50 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-700 px-2.5"
-                                onClick={() => handleEditPatient(patient)}
+                                onClick={() => handleEditClient(client)}
                               >
                                   <PencilIcon className="h-4 w-4" />
                               </Button>
@@ -764,7 +764,7 @@ export default function PacientesPage() {
                                 size="sm"
                                 className="h-9 bg-zinc-900/50 border-red-800 text-red-300 hover:bg-red-800 hover:border-red-700 px-2.5"
                                 onClick={() => {
-                                  setPatientToDelete(patient);
+                                  setClientToDelete(client);
                                   setIsDeleteModalOpen(true);
                                 }}
                               >
@@ -804,7 +804,7 @@ export default function PacientesPage() {
         <SheetContent className="bg-zinc-900 border-l border-zinc-800">
           <SheetHeader>
             <SheetTitle className="text-lg font-bold text-white">
-              {isEditModalOpen ? 'Editar Paciente' : 'Detalhes do Paciente'}
+              {isEditModalOpen ? 'Editar Cliente' : 'Detalhes do Cliente'}
             </SheetTitle>
           </SheetHeader>
 
@@ -834,7 +834,7 @@ export default function PacientesPage() {
                     type="email"
                     value={editFormData.email}
                     onChange={handleFormChange}
-                    placeholder="Email do paciente"
+                    placeholder="Email do cliente"
                     className="bg-zinc-900/50 border-zinc-800 text-zinc-300 placeholder:text-zinc-500 focus:border-zinc-700 focus:ring-zinc-700"
                     disabled={!isEditModalOpen}
                   />
@@ -847,7 +847,7 @@ export default function PacientesPage() {
                     name="phone"
                     value={editFormData.phone}
                     onChange={handleFormChange}
-                    placeholder="Telefone do paciente"
+                    placeholder="Telefone do cliente"
                     className="bg-zinc-900/50 border-zinc-800 text-zinc-300 placeholder:text-zinc-500 focus:border-zinc-700 focus:ring-zinc-700"
                     disabled={!isEditModalOpen}
                   />
@@ -901,7 +901,7 @@ export default function PacientesPage() {
                     name="medicalNotes"
                     value={editFormData.medicalNotes}
                     onChange={handleFormChange}
-                    placeholder="Observações sobre o paciente"
+                    placeholder="Observações sobre o cliente"
                     className="bg-zinc-900/50 border-zinc-800 text-zinc-300 placeholder:text-zinc-500 focus:border-zinc-700 focus:ring-zinc-700 min-h-[100px]"
                     disabled={!isEditModalOpen}
                   />
@@ -921,7 +921,7 @@ export default function PacientesPage() {
                     Cancelar
                   </Button>
                   <Button
-                    onClick={handleUpdatePatient}
+                    onClick={handleUpdateClient}
                     disabled={isSaving}
                     className="bg-zinc-900 hover:bg-zinc-800 text-white"
                   >
@@ -934,7 +934,7 @@ export default function PacientesPage() {
                     variant="outline"
                     onClick={() => {
                       setIsViewModalOpen(false);
-                      handleEditPatient(viewingPatient!);
+                      handleEditClient(viewingClient!);
                     }}
                     className="bg-zinc-900/50 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-700"
                   >
@@ -945,7 +945,7 @@ export default function PacientesPage() {
                     variant="outline"
                     onClick={() => {
                       setIsViewModalOpen(false);
-                      setPatientToDelete(viewingPatient);
+                      setClientToDelete(viewingClient);
                       setIsDeleteModalOpen(true);
                     }}
                     className="bg-zinc-900/50 border-red-800 text-red-300 hover:bg-red-800 hover:border-red-700"
@@ -964,7 +964,7 @@ export default function PacientesPage() {
       <Sheet open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
         <SheetContent className="bg-zinc-900 border-l border-zinc-800">
           <SheetHeader>
-            <SheetTitle className="text-lg font-bold text-white">Novo Paciente</SheetTitle>
+            <SheetTitle className="text-lg font-bold text-white">Novo Cliente</SheetTitle>
           </SheetHeader>
 
           <div className="space-y-6 mt-6">
@@ -995,7 +995,7 @@ export default function PacientesPage() {
                     type="email"
                     value={createFormData.email}
                     onChange={handleCreateFormChange}
-                    placeholder="Email do paciente"
+                    placeholder="Email do cliente"
                     className="bg-zinc-900/50 border-zinc-800 text-zinc-300 placeholder:text-zinc-500 focus:border-zinc-700 focus:ring-zinc-700"
                   />
                 </div>
@@ -1009,7 +1009,7 @@ export default function PacientesPage() {
                     name="phone"
                     value={createFormData.phone}
                     onChange={handleCreateFormChange}
-                    placeholder="Telefone do paciente"
+                    placeholder="Telefone do cliente"
                     className="bg-zinc-900/50 border-zinc-800 text-zinc-300 placeholder:text-zinc-500 focus:border-zinc-700 focus:ring-zinc-700"
                     required
                   />
@@ -1061,7 +1061,7 @@ export default function PacientesPage() {
                     name="medicalNotes"
                     value={createFormData.medicalNotes}
                     onChange={handleCreateFormChange}
-                    placeholder="Observações sobre o paciente"
+                    placeholder="Observações sobre o cliente"
                     className="bg-zinc-900/50 border-zinc-800 text-zinc-300 placeholder:text-zinc-500 focus:border-zinc-700 focus:ring-zinc-700 min-h-[100px]"
                   />
                 </div>
@@ -1085,7 +1085,7 @@ export default function PacientesPage() {
                     htmlFor="hasPortalAccess"
                     className="text-sm text-zinc-300 leading-none"
                   >
-                    Criar acesso ao portal do paciente
+                    Criar acesso ao portal do cliente
                   </Label>
                 </div>
               </div>
@@ -1101,11 +1101,11 @@ export default function PacientesPage() {
                 Cancelar
               </Button>
               <Button
-                onClick={handleCreateNewPatient}
+                onClick={handleCreateNewClient}
                 disabled={isCreating}
                 className="bg-zinc-900 hover:bg-zinc-800 text-white"
               >
-                {isCreating ? 'Criando...' : 'Criar Paciente'}
+                {isCreating ? 'Criando...' : 'Criar Cliente'}
               </Button>
             </div>
           </div>
@@ -1116,11 +1116,11 @@ export default function PacientesPage() {
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent className="bg-zinc-900 border border-zinc-800">
           <DialogHeader>
-            <DialogTitle className="text-white">Excluir Paciente</DialogTitle>
+            <DialogTitle className="text-white">Excluir Cliente</DialogTitle>
           </DialogHeader>
           <div className="py-4">
             <p className="text-zinc-300">
-              Tem certeza que deseja excluir este paciente? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.
             </p>
           </div>
           <DialogFooter>
@@ -1133,7 +1133,7 @@ export default function PacientesPage() {
             </Button>
             <Button
               variant="destructive"
-              onClick={handleDeletePatient}
+              onClick={handleDeleteClient}
               className="bg-red-900/50 border-red-800 text-red-300 hover:bg-red-800 hover:border-red-700"
             >
               Excluir

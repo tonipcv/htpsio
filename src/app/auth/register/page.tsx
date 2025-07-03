@@ -1,162 +1,240 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "@/components/ui/use-toast";
+import { ArrowRightIcon } from "@heroicons/react/24/outline";
+import { slugify } from "@/lib/utils";
 
-export default function Register() {
+interface FormData {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export default function RegisterPage() {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [slug, setSlug] = useState("");
-  const [specialty, setSpecialty] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validações básicas
+    if (!formData.name.trim() || !formData.email.trim() || !formData.password) {
+      toast({
+        title: "Erro de validação",
+        description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Erro de validação",
+        description: "As senhas não coincidem.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validação de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: "Email inválido",
+        description: "Por favor, insira um email válido.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
-    setError("");
 
     try {
+      // Gerar slug a partir do nome
+      const slug = slugify(formData.name);
+
       const response = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, slug, specialty })
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          slug: slug
+        }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Error creating account');
+        throw new Error(data.message || 'Erro ao criar conta');
       }
 
-      router.push('/auth/signin');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error creating account');
+      toast({
+        title: "Conta criada com sucesso!",
+        description: "Redirecionando para o login...",
+      });
+      
+      // Redireciona para o login após um breve delay para mostrar a mensagem de sucesso
+      setTimeout(() => {
+        router.push(data.redirect || '/auth/signin');
+      }, 2000);
+
+    } catch (error) {
+      console.error('Erro no registro:', error);
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Não foi possível criar sua conta. Tente novamente.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-black relative flex items-center justify-center">
-      <div className="w-full max-w-[480px] mx-auto px-4">
-        <div className="flex justify-center mb-8 items-center">
-          <Image
-            src="/logo.png"
-            alt="Logo"
-            width={48}
-            height={48}
-            priority
-            className="h-12 w-12 brightness-0 invert"
-          />
-        </div>
-        
-        <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl p-8 border border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-zinc-300 font-light">Name</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="bg-zinc-800/50 border-zinc-700 text-zinc-300 placeholder:text-zinc-500 focus:ring-2 focus:ring-zinc-700 focus:border-transparent"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-zinc-300 font-light">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Work e-mail"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="bg-zinc-800/50 border-zinc-700 text-zinc-300 placeholder:text-zinc-500 focus:ring-2 focus:ring-zinc-700 focus:border-transparent"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="slug" className="text-zinc-300 font-light">Username</Label>
-              <Input
-                id="slug"
-                type="text"
-                placeholder="Choose your username"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                required
-                className="bg-zinc-800/50 border-zinc-700 text-zinc-300 placeholder:text-zinc-500 focus:ring-2 focus:ring-zinc-700 focus:border-transparent"
-              />
-              <p className="text-xs text-zinc-500">
-                This will be your personal URL: app/<span className="text-zinc-300">{slug || 'username'}</span>
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="specialty" className="text-zinc-300 font-light">Specialty</Label>
-              <Input
-                id="specialty"
-                type="text"
-                placeholder="Your medical specialty"
-                value={specialty}
-                onChange={(e) => setSpecialty(e.target.value)}
-                className="bg-zinc-800/50 border-zinc-700 text-zinc-300 placeholder:text-zinc-500 focus:ring-2 focus:ring-zinc-700 focus:border-transparent"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-zinc-300 font-light">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="bg-zinc-800/50 border-zinc-700 text-zinc-300 placeholder:text-zinc-500 focus:ring-2 focus:ring-zinc-700 focus:border-transparent"
-              />
-            </div>
-            {error && (
-              <div className="text-red-400 text-sm">{error}</div>
-            )}
-            <Button 
-              type="submit" 
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white transition-colors border-zinc-700 rounded-xl"
-              disabled={isLoading}
-            >
-              {isLoading ? "Creating account..." : "Create account"}
-            </Button>
+    <div className="relative min-h-screen bg-black flex items-center justify-center p-4">
+      <div className="w-full max-w-lg">
+        <Card className="bg-zinc-900/50 border-zinc-800">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold tracking-tight text-white">
+              Criar Conta
+            </CardTitle>
+            <CardDescription className="text-zinc-400">
+              Preencha seus dados para começar a proteger seu ambiente
+            </CardDescription>
+          </CardHeader>
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-4">
+              {/* Nome */}
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium text-zinc-300">
+                  Nome completo
+                </Label>
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="Digite seu nome"
+                  value={formData.name}
+                  onChange={handleChange}
+                  autoComplete="name"
+                  required
+                  className="bg-zinc-900/50 border-zinc-800 text-zinc-300 placeholder:text-zinc-500 focus:border-zinc-700 focus:ring-zinc-700"
+                />
+              </div>
 
-            <div className="text-center">
-              <Link 
-                href="/auth/signin" 
-                className="text-zinc-400 hover:text-zinc-300 text-sm"
+              {/* Email */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium text-zinc-300">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  autoComplete="email"
+                  required
+                  className="bg-zinc-900/50 border-zinc-800 text-zinc-300 placeholder:text-zinc-500 focus:border-zinc-700 focus:ring-zinc-700"
+                />
+              </div>
+
+              {/* Senha */}
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium text-zinc-300">
+                  Senha
+                </Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleChange}
+                  autoComplete="new-password"
+                  required
+                  className="bg-zinc-900/50 border-zinc-800 text-zinc-300 placeholder:text-zinc-500 focus:border-zinc-700 focus:ring-zinc-700"
+                />
+              </div>
+
+              {/* Confirmar Senha */}
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-sm font-medium text-zinc-300">
+                  Confirmar senha
+                </Label>
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  autoComplete="new-password"
+                  required
+                  className="bg-zinc-900/50 border-zinc-800 text-zinc-300 placeholder:text-zinc-500 focus:border-zinc-700 focus:ring-zinc-700"
+                />
+              </div>
+            </CardContent>
+
+            <CardFooter className="flex flex-col gap-4">
+              <Button 
+                type="submit" 
+                className="w-full bg-blue-600 hover:bg-blue-500 text-white"
+                disabled={isLoading}
               >
-                Already have an account? Sign in
-              </Link>
-            </div>
-          </form>
-        </div>
+                {isLoading ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-zinc-700 border-t-zinc-400 mr-2" />
+                    Criando conta...
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    Criar conta
+                    <ArrowRightIcon className="h-4 w-4 ml-2" />
+                  </div>
+                )}
+              </Button>
 
-        <div className="mt-8 text-center">
-          <div className="flex items-center justify-center gap-1 mb-2">
-            {[...Array(5)].map((_, i) => (
-              <svg key={i} className="w-5 h-5 text-zinc-300" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            ))}
-          </div>
-          <p className="text-sm text-zinc-400">
-            4.7/5 based on 8,111 reviews
-          </p>
-        </div>
+              <div className="text-sm text-zinc-400">
+                Já tem uma conta?{' '}
+                <Link 
+                  href="/auth/signin" 
+                  className="text-blue-500 hover:text-blue-400 font-medium"
+                >
+                  Fazer login
+                </Link>
+              </div>
+            </CardFooter>
+          </form>
+        </Card>
       </div>
     </div>
   );

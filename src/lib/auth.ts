@@ -173,9 +173,12 @@ interface AuthTokenPayload {
  * Creates an authentication token for a patient
  */
 export async function createAuthToken(payload: AuthTokenPayload): Promise<string> {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
   return jwt.sign(
     payload,
-    process.env.JWT_SECRET || 'fallback-secret-for-development',
+    process.env.JWT_SECRET,
     { expiresIn: '7d' }
   );
 }

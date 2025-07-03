@@ -3,474 +3,179 @@ generator client {
 }
 
 datasource db {
-  provider     = "postgresql"
-  url          = env("DATABASE_URL")
-  relationMode = "prisma"
-  directUrl    = env("DATABASE_URL")
-}
-
-model Account {
-  id                String  @id
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-
-  @@unique([provider, providerAccountId])
-}
-
-model Conversation {
-  id        String   @id
-  sessionId String   @unique
-  doctorId  String
-  patientId String?
-  status    String   @default("active")
-  createdAt DateTime @default(now())
-  updatedAt DateTime
-
-  @@index([doctorId])
-  @@index([patientId])
-}
-
-model Event {
-  id           String   @id
-  userId       String
-  indicationId String?
-  type         String
-  ip           String?
-  userAgent    String?
-  utmSource    String?
-  utmMedium    String?
-  utmCampaign  String?
-  utmTerm      String?
-  utmContent   String?
-  createdAt    DateTime @default(now())
-  indication   Indication? @relation(fields: [indicationId], references: [id])
-}
-
-model Form {
-  id          String   @id
-  name        String
-  description String?
-  createdBy   String
-  isPublic    Boolean  @default(false)
-  category    String?
-  fields      Json[]
-  settings    Json
-  style       Json
-  stats       Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime
-  title       String
-
-  @@index([createdBy])
-}
-
-model FormBlock {
-  id      String @id
-  formId  String
-  type    String
-  content Json
-  order   Int    @default(0)
-
-  @@index([formId])
-}
-
-model FormSubmission {
-  id        String   @id
-  formId    String
-  data      Json
-  metadata  Json
-  createdAt DateTime @default(now())
-
-  @@index([formId])
-}
-
-model Indication {
-  id        String   @id
-  slug      String
-  name      String?
-  userId    String
-  createdAt DateTime @default(now())
-  fullLink  String?
-  patientId String?
-  type      String   @default("regular")
-  leads     leads[]
-  user      User     @relation(fields: [userId], references: [id])
-  events    Event[]
-}
-
-model InsideSalesLead {
-  id            String   @id
-  name          String
-  email         String
-  whatsapp      String
-  instagram     String?
-  area          String
-  employees     String
-  revenue       String
-  useTechnology String
-  status        String   @default("new")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @default(now())
-}
-
-model InterestOption {
-  id          String   @id
-  label       String
-  value       String
-  redirectUrl String?
-  isDefault   Boolean  @default(false)
-  userId      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime
-
-  @@unique([userId, value])
-}
-
-model LeadForm {
-  id            String    @id
-  name          String
-  email         String
-  whatsapp      String
-  instagram     String?
-  area          String
-  employees     String
-  revenue       String
-  useTechnology String
-  status        String    @default("Novo")
-  notes         String?
-  followUpDate  DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime
-}
-
-model Message {
-  id             String   @id
-  conversationId String
-  role           String
-  content        String
-  metadata       Json?
-  createdAt      DateTime @default(now())
-
-  @@index([conversationId])
-}
-
-model Page {
-  id           String   @id
-  userId       String
-  slug         String   @unique
-  title        String
-  subtitle     String?
-  avatarUrl    String?
-  primaryColor String   @default("#0070df")
-  layout       String   @default("classic")
-  formId       String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime
-  isModal      Boolean  @default(false)
-  serviceId    String?
-  address      String?
-  blocks       PageBlock[]
-  socialLinks  SocialLink[]
-  user         User     @relation(fields: [userId], references: [id])
-  referrals    PatientReferral[]
-  rewards      ReferralReward[]
-
-  @@index([userId])
-}
-
-model PageAddress {
-  id        String   @id
-  pageId    String
-  name      String
-  address   String
-  isDefault Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime
-
-  @@index([pageId])
-}
-
-model PageBlock {
-  id      String @id
-  pageId  String
-  type    String
-  content Json
-  order   Int    @default(0)
-  page    Page   @relation(fields: [pageId], references: [id])
-
-  @@index([pageId])
-}
-
-model Patient {
-  id                String    @id
-  name              String
-  email             String    @unique
-  phone             String
-  userId            String?
-  leadId            String?   @unique
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime
-  accessToken       String?
-  accessTokenExpiry DateTime?
-  hasPassword       Boolean   @default(false)
-  password          String?
-  firstAccess       Boolean   @default(true)
-  hasPortalAccess   Boolean   @default(false)
-  welcomeEmailSent  Boolean   @default(false)
-  resetToken        String?
-  resetTokenExpiry  DateTime?
-  hasActiveProducts Boolean   @default(false)
-  referrals         PatientReferral[]
-  user              User?     @relation(fields: [userId], references: [id])
-  lead              leads?    @relation(fields: [leadId], references: [id])
-
-  @@index([userId])
-  @@index([leadId])
-}
-
-model PatientReferral {
-  id        String   @id
-  slug      String   @unique
-  pageId    String
-  patientId String
-  visits    Int      @default(0)
-  leads     Int      @default(0)
-  sales     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime
-  patient   Patient  @relation(fields: [patientId], references: [id])
-  page      Page     @relation(fields: [pageId], references: [id])
-  rewards   ReferralReward[]
-
-  @@index([pageId])
-  @@index([patientId])
-}
-
-model PaymentLink {
-  id            String    @id
-  userId        String
-  planId        String
-  externalId    String    @unique
-  paymentUrl    String
-  status        String
-  transactionId String?
-  createdAt     DateTime  @default(now())
-  paidAt        DateTime?
-
-  @@index([userId])
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model ReferralReward {
-  id          String         @id
-  referralId  String
-  type        RewardType
-  title       String
-  description String?
-  unlockValue Int
-  unlockType  String
-  pageId      String?
-  textContent String?
-  unlockedAt  DateTime?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime
-  serviceId   String?
-  referral    PatientReferral @relation(fields: [referralId], references: [id])
-  page        Page?          @relation(fields: [pageId], references: [id])
-
-  @@index([pageId])
-  @@index([referralId])
-}
-
-model Session {
-  id           String   @id
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-}
-
-model SocialLink {
-  id       String @id
-  pageId   String
-  platform String
-  username String
-  url      String
-  page     Page   @relation(fields: [pageId], references: [id])
-
-  @@index([pageId])
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id                     String    @id
-  name                   String
-  slug                   String    @unique
-  specialty              String?
-  email                  String    @unique
-  password               String
-  phone                  String?
-  emailVerified          DateTime?
-  image                  String?
-  resetToken             String?
-  resetTokenExpiry       DateTime?
-  verificationCode       String?
-  verificationCodeExpiry DateTime?
-  createdAt              DateTime  @default(now())
-  plan                   String?
-  planExpiresAt          DateTime?
-  pageTemplate           String    @default("default")
-  isPremium              Boolean   @default(false)
-  premiumSince           DateTime?
-  planStatus             String?   @default("inactive")
-  planUpdatedAt          DateTime?
-  leads                  leads[]
-  indications           Indication[]
-  pages                 Page[]
-  pipelines            pipelines[]
-  patients             Patient[]
-
-  @@index([email], map: "user_email_idx")
-  @@index([slug], map: "user_slug_idx")
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
-model leads {
-  id              String    @id
+  id              String    @id @default(cuid())
   name            String
-  email           String?
-  phone           String
-  status          String    @default("Novo")
-  pipelineId      String?
-  user_id         String
-  indicationId    String?
-  source          String?
-  utmSource       String?
-  utmMedium       String?
-  utmCampaign     String?
-  utmTerm         String?
-  utmContent      String?
-  potentialValue  Float?
-  appointmentDate DateTime?
-  medicalNotes    String?
-  serviceId       String?
+  email           String    @unique
+  password        String
+  slug            String    @unique
   createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @default(now())
-  indication      Indication? @relation(fields: [indicationId], references: [id])
-  user            User       @relation(fields: [user_id], references: [id])
-  pipeline        pipelines? @relation(fields: [pipelineId], references: [id])
-  patient         Patient?
+  image           String?
+  plan            String?   @default("free")
+  isPremium       Boolean   @default(false)
+  acronisTenantId String?
+  subscription    Subscription?
+  devices         Device[]
+  tenantId        String?
+  tenant          Tenant?   @relation(fields: [tenantId], references: [id])
+  pages           Page[]
 
-  @@index([createdAt])
-  @@index([indicationId])
-  @@index([pipelineId])
-  @@index([status])
-  @@index([user_id])
+  @@index([tenantId])
+  @@map("users")
 }
 
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
-model leads_backup_clean {
-  id              String?
-  name            String?
-  email           String?
-  phone           String?
-  status          String?
-  pipelineId      String?
-  user_id         String?
-  indicationId    String?
-  source          String?
-  utmSource       String?
-  utmMedium       String?
-  utmCampaign     String?
-  utmTerm         String?
-  utmContent      String?
-  potentialValue  Float?
-  appointmentDate DateTime?
-  medicalNotes    String?
-  serviceId       String?
-  createdAt       DateTime?
-  updatedAt       DateTime?
-
-  @@ignore
+model Tenant {
+  id               String    @id @default(cuid())
+  name             String
+  slug             String    @unique
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  users            User[]
+  acronisTenantId  String?
 }
 
-model leads_old_final {
-  id              String    @id(map: "leads_new_pkey")
-  name            String
-  email           String?
-  phone           String
-  status          String    @default("Novo")
-  pipelineId      String?
-  user_id         String
-  indicationId    String?
-  source          String?
-  utmSource       String?
-  utmMedium       String?
-  utmCampaign     String?
-  utmTerm         String?
-  utmContent      String?
-  potentialValue  Float?
-  appointmentDate DateTime?
-  medicalNotes    String?
-  serviceId       String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @default(now())
-
-  @@index([createdAt], map: "leads_new_createdAt_idx")
-  @@index([indicationId], map: "leads_new_indicationId_idx")
-  @@index([pipelineId], map: "leads_new_pipelineId_idx")
-  @@index([status], map: "leads_new_status_idx")
-  @@index([user_id], map: "leads_new_user_id_idx")
+model ActivationStatus {
+  id                    String   @id @default(uuid())
+  tenantId             String   @unique
+  tenant               Tenant   @relation(fields: [tenantId], references: [id])
+  
+  // Wizard Steps
+  installerDownloaded  Boolean  @default(false)
+  installerDownloadedAt DateTime?
+  
+  deviceInstalled      Boolean  @default(false)
+  deviceInstalledAt    DateTime?
+  
+  emailVerified        Boolean  @default(false)
+  emailVerifiedAt      DateTime?
+  
+  wizardCompleted      Boolean  @default(false)
+  wizardCompletedAt    DateTime?
+  
+  currentStep          String   @default("DOWNLOAD_INSTALLER") // DOWNLOAD_INSTALLER, INSTALL_DEVICE, VERIFY_EMAIL, COMPLETED
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
-model pipelines {
-  id          String   @id @default(dbgenerated("gen_random_uuid()"))
+model Installer {
+  id         String   @id @default(uuid())
+  tenantId   String   @unique
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  url        String
+  os         String   // 'windows' | 'mac'
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  
+  // Customização
+  brandingColor String? // Cor principal da marca
+  brandingLogo  String? // URL do logo da empresa
+}
+
+model ProtectionStatus {
+  id            String   @id @default(uuid())
+  tenantId      String   @unique
+  tenant        Tenant   @relation(fields: [tenantId], references: [id])
+  
+  // Status detalhado dos serviços
+  endpointOk    Boolean  @default(false)
+  endpointMessage String? // Ex: "Seu computador está protegido" ou "Antivírus desatualizado"
+  
+  emailOk       Boolean  @default(false)
+  emailMessage  String?  // Ex: "Email protegido contra ameaças" ou "Proteção de email não configurada"
+  
+  backupOk      Boolean  @default(false)
+  backupMessage String?  // Ex: "Seus arquivos estão seguros" ou "Backup desativado"
+  
+  lastUpdated   DateTime @default(now())
+  nextCheckAt   DateTime? // Próxima verificação agendada
+}
+
+model Device {
+  id          String    @id @default(cuid())
+  externalId  String    @unique
+  tenantId    String
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
   name        String
-  description String?
-  user_id     String
-  created_at  DateTime @default(now()) @db.Timestamp(6)
-  updated_at  DateTime @default(now()) @db.Timestamp(6)
-  columns     Json?    @default("[{\"id\": \"novos\", \"title\": \"Novos\"}, {\"id\": \"agendados\", \"title\": \"Agendados\"}, {\"id\": \"compareceram\", \"title\": \"Compareceram\"}, {\"id\": \"fechados\", \"title\": \"Fechados\"}, {\"id\": \"naoVieram\", \"title\": \"Não vieram\"}]")
-  user        User     @relation(fields: [user_id], references: [id])
-  leads       leads[]
+  os          String
+  status      String
+  lastSeen    DateTime
+  version     String?
+  isIsolated  Boolean   @default(false)
+  ipAddress   String?
+  macAddress  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  actions     SecurityAction[]
 
-  @@index([user_id], map: "pipeline_user_id_idx")
+  @@unique([externalId, tenantId])
+  @@index([userId])
 }
 
-model services {
-  id          String   @id
-  name        String
-  description String?
-  price       Float?
-  category    String?
-  is_active   Boolean  @default(true)
-  created_at  DateTime @default(now()) @db.Timestamp(6)
-  updated_at  DateTime @default(now()) @db.Timestamp(6)
-  user_id     String
+model Page {
+  id           String   @id @default(uuid())
+  title        String
+  subtitle     String?
+  slug         String
+  avatarUrl    String?
+  primaryColor String   @default("#000000")
+  layout       String   @default("classic")
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  blocks       PageBlock[]
+  socialLinks  SocialLink[]
 
-  @@index([user_id], map: "service_user_id_idx")
+  @@unique([userId, slug])
 }
 
-enum RewardType {
-  PAGE
-  TEXT
+model PageBlock {
+  id        String   @id @default(uuid())
+  type      String
+  content   String
+  order     Int      @default(0)
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-enum reward_type {
-  PAGE
-  TEXT
+model SocialLink {
+  id        String   @id @default(uuid())
+  platform  String
+  url       String
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SecurityAction {
+  id        String   @id @default(uuid())
+  userId    String
+  deviceId  String
+  device    Device   @relation(fields: [deviceId], references: [id])
+  action    String   // 'isolate', 'restore', 'scan', etc.
+  reason    String?
+  status    String   // 'pending', 'completed', 'failed'
+  timestamp DateTime @default(now())
+
+  @@index([userId])
+  @@index([deviceId])
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  plan      String   @default("free")
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

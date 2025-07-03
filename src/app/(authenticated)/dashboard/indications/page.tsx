@@ -503,13 +503,13 @@ export default function ReferralsPage() {
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <span className="text-sm text-zinc-400 truncate max-w-[200px]">
-                                  {`${baseUrl}/${userSlug}/${referral.slug}`}
+                                  {`${baseUrl}/@${userSlug}/${referral.slug}`}
                                 </span>
                                 <Button 
                                   variant="ghost" 
                                   size="icon" 
                                   className="h-8 w-8 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-300"
-                                  onClick={() => copyToClipboard(`${baseUrl}/${userSlug}/${referral.slug}`)}
+                                  onClick={() => copyToClipboard(`${baseUrl}/@${userSlug}/${referral.slug}`)}
                                 >
                                   <ClipboardIcon className="h-4 w-4" />
                                 </Button>
@@ -580,7 +580,7 @@ export default function ReferralsPage() {
                                   variant="ghost" 
                                   size="icon" 
                                   className="h-8 w-8 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-300"
-                                  onClick={() => handleShowQRCode(`${baseUrl}/${userSlug}/${referral.slug}`, referral.page.title)}
+                                  onClick={() => handleShowQRCode(`${baseUrl}/@${userSlug}/${referral.slug}`, referral.page.title)}
                                 >
                                   <QrCodeIcon className="h-4 w-4" />
                                 </Button>

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Regex para detectar URLs no formato /{userSlug}/{indicador}
-const INDICATION_REGEX = /^\/([^\/]+)\/([^\/]+)$/;
+// Regex para detectar URLs no formato /@{userSlug}/{indicador}
+const INDICATION_REGEX = /^\/@([^\/]+)\/([^\/]+)$/;
 
-// Regex para detectar URLs no formato /quiz/{userSlug}/{quizSlug}
-const QUIZ_REGEX = /^\/quiz\/([^\/]+)\/([^\/]+)$/;
+// Regex para detectar URLs no formato /quiz/@{userSlug}/{quizSlug}
+const QUIZ_REGEX = /^\/quiz\/@([^\/]+)\/([^\/]+)$/;
 
 export async function middleware(req: NextRequest) {
   const url = new URL(req.url);

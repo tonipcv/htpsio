@@ -13,6 +13,7 @@ import {
   SparklesIcon,
   ShoppingBagIcon,
   DocumentTextIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,7 @@ interface NavItem {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   description?: string;
+  items?: NavItem[];
 }
 
 interface NavSection {
@@ -42,16 +44,8 @@ export default function Navigation() {
   // Lista de rotas protegidas onde a navegação deve aparecer
   const protectedRoutes = [
     '/dashboard',
-    '/dashboard/indications',
-    '/dashboard/leads',
-    '/dashboard/pipeline',
-    '/dashboard/services',
-    '/dashboard/pacientes',
-    '/profile',
-    '/links',
-    '/forms',
-    '/forms/',
-    '/forms/[formId]'
+    '/dashboard/security',
+    '/profile'
   ];
 
   // Só mostrar navegação em rotas protegidas
@@ -71,84 +65,68 @@ export default function Navigation() {
           description: 'Visão geral'
         },
         {
-          href: '/dashboard/services',
-          label: 'Serviços',
-          icon: ShoppingBagIcon,
-          description: 'Gerenciar serviços'
-        },
-        {
-          href: '/dashboard/indications',
-          label: 'Indicações',
-          icon: LinkIcon,
-          description: 'Gerenciar links'
-        },
-        {
-          href: '/links',
-          label: 'Páginas',
-          icon: LinkIcon,
-          description: 'Páginas de links'
-        },
-        {
-          href: '/forms',
-          label: 'Formulários',
-          icon: DocumentTextIcon,
-          description: 'Formulários públicos'
-        },
-        {
-          href: '/dashboard/leads',
-          label: 'Leads',
-          icon: UsersIcon,
-          description: 'Lista de contatos'
-        },
-        {
-          href: '/dashboard/pacientes',
-          label: 'Clientes',
-          icon: HeartIcon,
-          description: 'Gerenciar pacientes'
-        },
-        {
-          href: '/dashboard/pipeline',
-          label: 'Pipeline',
-          icon: FunnelIcon,
-          description: 'Gestão de status'
+          href: '/dashboard/security',
+          label: 'Segurança',
+          icon: ShieldCheckIcon,
+          description: 'Gerenciar segurança',
+          items: [
+            {
+              href: '/dashboard/security',
+              label: 'Acronis',
+              icon: ShieldCheckIcon,
+              description: 'Gerenciar Acronis'
+            },
+            {
+              href: '/dashboard/security/bitdefender',
+              label: 'Bitdefender',
+              icon: ShieldCheckIcon,
+              description: 'Gerenciar Bitdefender'
+            }
+          ]
         }
       ]
     }
   ];
 
-  const NavItemComponent = ({ item, className }: { item: NavItem, className?: string }) => (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Link href={item.href} className="block">
-            <Button
-              variant="ghost"
-              className={cn(
-                "w-full h-9 flex items-center px-2.5 transition-all duration-200 gap-2.5 rounded-lg group",
-                pathname === item.href 
-                  ? "bg-zinc-800 text-white shadow-sm" 
-                  : "text-zinc-400 hover:bg-zinc-800/50",
-                className
-              )}
-            >
-              <item.icon className={cn(
-                "h-[18px] w-[18px] stroke-[1.5] flex-shrink-0 transition-colors duration-200",
-                pathname === item.href ? "text-white" : "text-zinc-400"
-              )} />
-              <span className={cn(
-                "text-sm font-medium whitespace-nowrap transition-colors duration-200",
-                pathname === item.href ? "text-white" : "text-zinc-400"
-              )}>
-                {item.label}
-              </span>
-            </Button>
-          </Link>
-        </TooltipTrigger>
-        <TooltipContent side="right" className="hidden lg:block">
-          <p>{item.description}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+  const NavItemComponent = ({ item, className, isSubItem = false }: { item: NavItem, className?: string, isSubItem?: boolean }) => (
+    <>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link href={item.href} className="block">
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full h-9 flex items-center px-2.5 transition-all duration-200 gap-2.5 rounded-lg group",
+                  pathname === item.href 
+                    ? "bg-zinc-800 text-white shadow-sm" 
+                    : "text-zinc-400 hover:bg-zinc-800/50",
+                  isSubItem && "pl-8",
+                  className
+                )}
+              >
+                <item.icon className={cn(
+                  "h-[18px] w-[18px] stroke-[1.5] flex-shrink-0 transition-colors duration-200",
+                  pathname === item.href ? "text-white" : "text-zinc-400"
+                )} />
+                <span className={cn(
+                  "text-sm font-medium whitespace-nowrap transition-colors duration-200",
+                  pathname === item.href ? "text-white" : "text-zinc-400"
+                )}>
+                  {item.label}
+                </span>
+              </Button>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="hidden lg:block">
+            <p>{item.description}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      {item.items?.map((subItem) => (
+        <NavItemComponent key={subItem.href} item={subItem} isSubItem={true} />
+      ))}
+    </>
   );
 
   const SectionTitle = ({ title }: { title: string }) => (
@@ -190,21 +168,23 @@ export default function Navigation() {
             </nav>
           </ScrollArea>
           <Separator className="bg-zinc-800/50" />
-          <div className="p-2">
-            <Link href="/profile">
-              <Button variant="ghost" className="w-full justify-start gap-2 h-auto py-2 text-zinc-400 hover:text-white hover:bg-zinc-800/50">
-                <Avatar className="h-8 w-8 ring-1 ring-zinc-800 bg-zinc-900">
-                  {session?.user?.image ? (
-                    <AvatarImage src={session.user.image} alt={session.user.name || "Profile"} className="object-cover" />
-                  ) : (
-                    <AvatarFallback className="bg-zinc-900">
-                      <UserCircleIcon className="h-5 w-5 text-zinc-400" />
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <span className="text-sm font-medium">Perfil</span>
-              </Button>
-            </Link>
+          <div className="p-4">
+            <div className="flex items-center gap-2">
+              <Avatar className="h-9 w-9">
+                <AvatarImage src={session?.user?.image || undefined} />
+                <AvatarFallback>
+                  {session?.user?.name?.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="truncate">
+                <p className="text-sm font-medium text-white truncate">
+                  {session?.user?.name}
+                </p>
+                <p className="text-xs text-zinc-400 truncate">
+                  {session?.user?.email}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </nav>

@@ -343,18 +343,18 @@ export default function LinksPage() {
         )}
 
         <Sheet open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <SheetContent className="w-full sm:max-w-[500px] overflow-y-auto bg-zinc-900 border-l border-zinc-800">
-            <div className="space-y-4">
-              <SheetHeader>
-                <SheetTitle className="text-white">Nova Página</SheetTitle>
-                <SheetDescription className="text-zinc-400">
-                  Crie uma nova página de links personalizada. Apenas o título é obrigatório, os demais campos são opcionais.
-                </SheetDescription>
-              </SheetHeader>
+          <SheetContent className="w-full sm:max-w-[500px] overflow-y-auto bg-white border-l border-gray-200">
+            <SheetHeader>
+              <SheetTitle className="text-gray-900">Nova Página</SheetTitle>
+              <SheetDescription className="text-gray-500">
+                Crie uma nova página de links personalizada.
+              </SheetDescription>
+            </SheetHeader>
 
+            <div className="space-y-4">
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title" className="text-zinc-300">
+                  <Label htmlFor="title" className="text-gray-700">
                     Título da Página <span className="text-red-500">*</span>
                   </Label>
                   <Input
@@ -369,88 +369,87 @@ export default function LinksPage() {
                       });
                     }}
                     placeholder="Ex: Meus Links"
-                    className="bg-zinc-800/50 border-zinc-700 text-zinc-300 placeholder:text-zinc-500"
+                    className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:ring-gray-200"
                   />
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-gray-500">
                     Este será o título principal da sua página
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="slug" className="text-zinc-300">Caminho da Página</Label>
+                  <Label htmlFor="subtitle" className="text-gray-700">
+                    Subtítulo (opcional)
+                  </Label>
+                  <Input
+                    id="subtitle"
+                    placeholder="Descreva sua página"
+                    value={newPage.subtitle}
+                    onChange={(e) => setNewPage({ ...newPage, subtitle: e.target.value })}
+                    className="border-gray-200 focus:border-gray-300 focus:ring-gray-200 text-gray-900 placeholder:text-gray-400"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="slug" className="text-gray-700">Caminho da Página</Label>
                   <div className="flex gap-2">
                     <Input
                       id="slug"
                       value={newPage.slug}
                       onChange={(e) => setNewPage({ ...newPage, slug: generateSlug(e.target.value) })}
                       placeholder="meus-links"
-                      className="bg-zinc-800/50 border-zinc-700 text-zinc-300 placeholder:text-zinc-500"
+                      className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:ring-gray-200"
                     />
                     <Button 
                       variant="outline" 
                       onClick={() => setNewPage({ ...newPage, slug: generateSlug(newPage.title) })}
                       type="button"
-                      className="bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:border-zinc-600"
+                      className="bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
                     >
                       Gerar
                     </Button>
                   </div>
-                  <p className="text-xs text-zinc-500">
-                    Este será o caminho da sua página: {baseUrl}/{user?.slug || 'seu-usuario'}/<strong className="text-zinc-300">{newPage.slug || 'caminho-da-pagina'}</strong>
+                  <p className="text-xs text-gray-500">
+                    Este será o caminho da sua página: {baseUrl}/{user?.slug || 'seu-usuario'}/<strong className="text-gray-900">{newPage.slug || 'caminho-da-pagina'}</strong>
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="subtitle" className="text-zinc-300">Subtítulo</Label>
-                  <Input
-                    id="subtitle"
-                    value={newPage.subtitle}
-                    onChange={(e) => setNewPage({ ...newPage, subtitle: e.target.value })}
-                    placeholder="Ex: Links e contatos profissionais"
-                    className="bg-zinc-800/50 border-zinc-700 text-zinc-300 placeholder:text-zinc-500"
-                  />
-                  <p className="text-xs text-zinc-500">
-                    Uma breve descrição que aparecerá abaixo do título
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="avatarUrl" className="text-zinc-300">URL do Avatar</Label>
+                  <Label htmlFor="avatarUrl" className="text-gray-700">URL do Avatar</Label>
                   <Input
                     id="avatarUrl"
                     value={newPage.avatarUrl}
                     onChange={(e) => setNewPage({ ...newPage, avatarUrl: e.target.value })}
                     placeholder="https://exemplo.com/sua-foto.jpg"
-                    className="bg-zinc-800/50 border-zinc-700 text-zinc-300 placeholder:text-zinc-500"
+                    className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:ring-gray-200"
                   />
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-gray-500">
                     Link para a imagem que será exibida no topo da página
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="address" className="text-zinc-300">Endereço</Label>
+                  <Label htmlFor="address" className="text-gray-700">Endereço</Label>
                   <Input
                     id="address"
                     value={newPage.address}
                     onChange={(e) => setNewPage({ ...newPage, address: e.target.value })}
                     placeholder="Ex: Rua das Flores, 123"
-                    className="bg-zinc-800/50 border-zinc-700 text-zinc-300 placeholder:text-zinc-500"
+                    className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:ring-gray-200"
                   />
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-gray-500">
                     Endereço da página
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="primaryColor" className="text-zinc-300">Cor Principal</Label>
+                  <Label htmlFor="primaryColor" className="text-gray-700">Cor Principal</Label>
                   <div className="flex gap-2">
                     <Input
                       id="primaryColor"
                       value={newPage.primaryColor}
                       onChange={(e) => setNewPage({ ...newPage, primaryColor: e.target.value })}
                       placeholder="#0070df"
-                      className="bg-zinc-800/50 border-zinc-700 text-zinc-300 placeholder:text-zinc-500"
+                      className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-gray-300 focus:ring-gray-200"
                     />
                     <input
                       type="color"
@@ -459,18 +458,18 @@ export default function LinksPage() {
                       className="h-10 w-10"
                     />
                   </div>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-gray-500">
                     Cor que será usada nos botões e elementos principais
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="layout" className="text-zinc-300">Layout</Label>
+                  <Label htmlFor="layout" className="text-gray-700">Layout</Label>
                   <select
                     id="layout"
                     value={newPage.layout}
                     onChange={(e) => setNewPage({ ...newPage, layout: e.target.value })}
-                    className="w-full rounded-md bg-zinc-800/50 border-zinc-700 text-zinc-300 px-3 py-2"
+                    className="w-full rounded-md bg-white border-gray-200 text-gray-900 px-3 py-2 focus:border-gray-300 focus:ring-gray-200"
                   >
                     <option value="classic">Clássico</option>
                     <option value="modern">Moderno</option>
@@ -479,7 +478,7 @@ export default function LinksPage() {
                     <option value="bentodark">Bento Dark</option>
                     <option value="light">Light</option>
                   </select>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-gray-500">
                     Escolha o estilo visual da sua página
                   </p>
                 </div>
@@ -490,65 +489,65 @@ export default function LinksPage() {
                     id="isModal"
                     checked={newPage.isModal}
                     onChange={(e) => setNewPage({ ...newPage, isModal: e.target.checked })}
-                    className="h-4 w-4 rounded bg-zinc-800 border-zinc-700 text-blue-600"
+                    className="h-4 w-4 rounded bg-white border-gray-200 text-blue-600"
                   />
-                  <Label htmlFor="isModal" className="text-zinc-300">Ativar modo modal</Label>
-                  <p className="text-xs text-zinc-500 ml-2">
+                  <Label htmlFor="isModal" className="text-gray-700">Ativar modo modal</Label>
+                  <p className="text-xs text-gray-500 ml-2">
                     Quando ativado, a página será exibida em um modal ao invés de uma página completa
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="addresses" className="text-zinc-300">Endereços</Label>
-                    <MapIcon className="h-4 w-4 text-zinc-400" />
+                    <Label htmlFor="addresses" className="text-gray-700">Endereços</Label>
+                    <MapIcon className="h-4 w-4 text-gray-400" />
                   </div>
                   <AddressManager
                     addresses={newPage.addresses}
                     onChange={(addresses) => setNewPage({ ...newPage, addresses })}
                   />
                 </div>
+              </div>
 
-                <div className="flex items-center justify-end gap-2 pt-4 border-t border-zinc-800">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsCreateModalOpen(false);
-                      setNewPage({
-                        title: '',
-                        subtitle: '',
-                        slug: '',
-                        layout: 'classic',
-                        primaryColor: '#0070df',
-                        avatarUrl: '',
-                        address: '',
-                        addresses: [],
-                        isModal: false,
-                      });
-                    }}
-                    className="bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:border-zinc-600"
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={handleCreatePage}
-                    disabled={!newPage.title.trim() || isCreating}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    {isCreating ? (
-                      <>
-                        <PlusCircle className="h-4 w-4 mr-2 animate-spin" />
-                        Criando...
-                      </>
-                    ) : (
-                      <>
-                        <PlusCircle className="h-4 w-4 mr-2" />
-                        Criar Página
-                      </>
-                    )}
-                  </Button>
-                </div>
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-200">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsCreateModalOpen(false);
+                    setNewPage({
+                      title: '',
+                      subtitle: '',
+                      slug: '',
+                      layout: 'classic',
+                      primaryColor: '#0070df',
+                      avatarUrl: '',
+                      address: '',
+                      addresses: [],
+                      isModal: false,
+                    });
+                  }}
+                  className="bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleCreatePage}
+                  disabled={!newPage.title.trim() || isCreating}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {isCreating ? (
+                    <>
+                      <PlusCircle className="h-4 w-4 mr-2 animate-spin" />
+                      Criando...
+                    </>
+                  ) : (
+                    <>
+                      <PlusCircle className="h-4 w-4 mr-2" />
+                      Criar Página
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           </SheetContent>

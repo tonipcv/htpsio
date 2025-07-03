@@ -393,7 +393,7 @@ export default function QuizUtilsPage() {
                       {ind.hasQuiz && ind.fullLink && (
                         <Button 
                           variant="outline" 
-                          onClick={() => window.open(`/quiz/${session?.user?.userSlug}/${ind.slug}`, '_blank')}
+                          onClick={() => window.open(`/quiz/@${session?.user?.userSlug}/${ind.slug}`, '_blank')}
                           className="bg-white text-blue-600 border-blue-200 text-xs h-8"
                         >
                           <ExternalLink className="h-3.5 w-3.5 mr-1.5" />

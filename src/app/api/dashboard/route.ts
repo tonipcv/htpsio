@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Buscar contagem de leads
+    // Buscar contagem de leads com verificação defensiva
     const totalLeads = await prisma.leads.count({
       where: { 
         user_id: userId,
@@ -51,27 +51,27 @@ export async function GET(req: NextRequest) {
           not: 'Removido'
         }
       }
-    });
+    }) || 0;
 
-    // Buscar contagem de indicações
+    // Buscar contagem de indicações com verificação defensiva
     const totalIndications = await prisma.indication.count({
       where: { userId }
-    });
+    }) || 0;
 
-    // Buscar contagem de cliques
+    // Buscar contagem de cliques com verificação defensiva
     const totalClicks = await prisma.event.count({
       where: { 
         userId,
         type: 'click' 
       }
-    });
+    }) || 0;
 
     // Calcular taxa de conversão (leads / cliques)
     const conversionRate = totalClicks > 0 
       ? Math.min(Math.round((totalLeads / totalClicks) * 100), 100) 
       : 0;
 
-    // Buscar leads recentes (últimos 5)
+    // Buscar leads recentes (últimos 5) com verificação defensiva
     const recentLeads = await prisma.leads.findMany({
       where: { user_id: userId },
       orderBy: { createdAt: 'desc' },
@@ -84,9 +84,9 @@ export async function GET(req: NextRequest) {
           }
         }
       }
-    });
+    }).catch(() => []) || [];
 
-    // Buscar top indicadores (indicações com mais leads)
+    // Buscar top indicadores (indicações com mais leads) com verificação defensiva
     const topIndications = await prisma.indication.findMany({
       where: { userId },
       include: {
@@ -105,9 +105,9 @@ export async function GET(req: NextRequest) {
         }
       ],
       take: 5
-    });
+    }).catch(() => []) || [];
 
-    // Buscar as origens de tráfego mais comuns
+    // Buscar as origens de tráfego mais comuns com verificação defensiva
     const topSourcesRaw = await prisma.$queryRaw`
       SELECT "utmSource" as "source", COUNT(*) as "count"
       FROM "public"."leads"
@@ -115,9 +115,9 @@ export async function GET(req: NextRequest) {
       GROUP BY "utmSource"
       ORDER BY "count" DESC
       LIMIT 5
-    `;
+    `.catch(() => []) || [];
 
-    // Calcular faturamento total (soma do potentialValue dos leads fechados)
+    // Calcular faturamento total (soma do potentialValue dos leads fechados) com verificação defensiva
     const closedLeadsData = await prisma.leads.aggregate({
       where: { 
         user_id: userId,
@@ -127,9 +127,9 @@ export async function GET(req: NextRequest) {
       _sum: {
         potentialValue: true
       }
-    });
+    }).catch(() => ({ _sum: { potentialValue: null } }));
     
-    // Calcular potencial em aberto (soma do potentialValue dos leads não fechados)
+    // Calcular potencial em aberto (soma do potentialValue dos leads não fechados) com verificação defensiva
     const openLeadsData = await prisma.leads.aggregate({
       where: { 
         user_id: userId,
@@ -139,11 +139,16 @@ export async function GET(req: NextRequest) {
       _sum: {
         potentialValue: true
       }
-    });
+    }).catch(() => ({ _sum: { potentialValue: null } }));
+
+    // Buscar contagem de pacientes com verificação defensiva
+    const totalPatients = await prisma.patient.count({ 
+      where: { userId } 
+    }).catch(() => 0) || 0;
 
     // Extrair os valores e garantir que eles não sejam nulos
-    const totalRevenue = closedLeadsData._sum.potentialValue || 0;
-    const potentialRevenue = openLeadsData._sum.potentialValue || 0;
+    const totalRevenue = closedLeadsData?._sum?.potentialValue || 0;
+    const potentialRevenue = openLeadsData?._sum?.potentialValue || 0;
 
     // Converter todos os dados que podem conter BigInt
     const responseData = {
@@ -157,7 +162,7 @@ export async function GET(req: NextRequest) {
       totalRevenue: Number(totalRevenue),
       potentialRevenue: Number(potentialRevenue),
       revenue: Number(totalRevenue),
-      totalPatients: await prisma.patient.count({ where: { userId } }),
+      totalPatients: Number(totalPatients),
       clickToLeadRate: totalLeads > 0 ? Math.min(Math.round((totalClicks / totalLeads)), 100) : 0
     };
 
@@ -165,12 +170,22 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('Erro ao buscar dados do dashboard:', error instanceof Error ? error.message : String(error));
     
-    return new NextResponse(
-      JSON.stringify({ error: 'Erro ao processar a solicitação' }),
-      { 
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
+    // Retornar dados padrão em caso de erro para evitar quebra da interface
+    const defaultData = {
+      totalLeads: 0,
+      totalIndications: 0,
+      totalClicks: 0,
+      conversionRate: 0,
+      recentLeads: [],
+      topIndications: [],
+      topSources: [],
+      totalRevenue: 0,
+      potentialRevenue: 0,
+      revenue: 0,
+      totalPatients: 0,
+      clickToLeadRate: 0
+    };
+
+    return NextResponse.json(defaultData, { status: 200 });
   }
 } 

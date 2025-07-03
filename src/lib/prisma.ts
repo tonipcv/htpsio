@@ -6,12 +6,7 @@ declare global {
 
 const prismaClientSingleton = () => {
   return new PrismaClient({
-    log: ['error'],
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL
-      }
-    }
+    log: ['error']
   });
 };
 
@@ -42,10 +37,8 @@ export async function withRetry<T>(
         throw error;
       }
       
-      // Espere um pouco antes de tentar novamente
-      if (i < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
-      }
+      // Espere antes de tentar novamente
+      await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
     }
   }
   

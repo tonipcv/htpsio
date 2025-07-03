@@ -18,7 +18,15 @@ import {
   CurrencyDollarIcon,
   UsersIcon,
   RocketLaunchIcon,
-  UserPlusIcon
+  UserPlusIcon,
+  ShieldCheckIcon,
+  ShieldExclamationIcon,
+  ComputerDesktopIcon,
+  ServerIcon,
+  BoltIcon,
+  LockClosedIcon,
+  ClockIcon,
+  ExclamationTriangleIcon
 } from "@heroicons/react/24/outline";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -80,6 +88,30 @@ interface DashboardData {
   revenue: number;
 }
 
+interface SecurityData {
+  endpoints: {
+    total: number;
+    protected: number;
+    atRisk: number;
+    lastUpdated: string;
+  };
+  threats: {
+    blocked: number;
+    active: number;
+    resolved: number;
+  };
+  compliance: {
+    score: number;
+    criticalIssues: number;
+    warnings: number;
+  };
+  backup: {
+    protected: number;
+    lastBackup: string;
+    totalSize: string;
+  };
+}
+
 // Componente para formatar o Tooltip do gráfico
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -94,9 +126,32 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status: authStatus } = useSession();
   const router = useRouter();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [securityData, setSecurityData] = useState<SecurityData>({
+    endpoints: {
+      total: 0,
+      protected: 0,
+      atRisk: 0,
+      lastUpdated: new Date().toISOString()
+    },
+    threats: {
+      blocked: 0,
+      active: 0,
+      resolved: 0
+    },
+    compliance: {
+      score: 0,
+      criticalIssues: 0,
+      warnings: 0
+    },
+    backup: {
+      protected: 0,
+      lastBackup: new Date().toISOString(),
+      totalSize: '0 GB'
+    }
+  });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedPeriod, setSelectedPeriod] = useState("7d");
@@ -104,18 +159,9 @@ export default function DashboardPage() {
   useEffect(() => {
     if (session?.user?.id) {
       fetchDashboardData();
+      fetchSecurityData();
     }
   }, [session]);
-
-  useEffect(() => {
-    // Verifica se o usuário está autenticado e não é premium
-    if (status === 'authenticated' && session?.user) {
-      const isPremiumUser = session.user.isPremium === true || session.user.plan === 'premium';
-      if (!isPremiumUser) {
-        router.push('/bloqueado');
-      }
-    }
-  }, [session, status, router]);
 
   const fetchDashboardData = async () => {
     try {
@@ -167,6 +213,26 @@ export default function DashboardPage() {
     }
   };
 
+  const fetchSecurityData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/dashboard');
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSecurityData(data);
+      } else {
+        console.error('Error fetching security data:', 
+          `Status: ${response.status} - ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error fetching security data:', 
+        error instanceof Error ? error.message : String(error));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Preparar dados para gráficos
   const sourceChartData = dashboardData?.topSources?.map(source => ({
     name: source.source || "Direto",
@@ -179,7 +245,7 @@ export default function DashboardPage() {
   })) || [];
 
   // Mostra loading enquanto verifica
-  if (status === 'loading' || !session?.user) {
+  if (authStatus === 'loading' || !session?.user) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#2b2a2c]">
         <div className="animate-spin h-6 w-6 border-2 border-white border-t-transparent rounded-full" />
@@ -187,9 +253,30 @@ export default function DashboardPage() {
     );
   }
 
-  // Se não for premium, não renderiza o conteúdo
-  if (!session.user.isPremium && session.user.plan !== 'premium') {
-    return null;
+  const getProtectionStatus = () => {
+    if (!securityData?.endpoints) return { statusColor: 'text-gray-500', statusText: 'Loading' };
+    
+    const { protected: protectedEndpoints, total } = securityData.endpoints;
+    if (total === 0) return { statusColor: 'text-gray-500', statusText: 'No Data' };
+    
+    const protectedPercentage = (protectedEndpoints / total) * 100;
+    if (protectedPercentage === 100) return { statusColor: 'text-green-500', statusText: 'Protected' };
+    if (protectedPercentage >= 80) return { statusColor: 'text-yellow-500', statusText: 'At Risk' };
+    return { statusColor: 'text-red-500', statusText: 'Critical' };
+  };
+
+  const protectionStatus = getProtectionStatus();
+
+  if (loading) {
+    return (
+      <div className="min-h-[100dvh] bg-black pt-20 pb-24 md:pt-12 md:pb-16 px-4">
+        <div className="container mx-auto pl-1 sm:pl-4 md:pl-8 lg:pl-16 max-w-[98%] sm:max-w-[95%] md:max-w-[90%] lg:max-w-[85%]">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin h-8 w-8 border-2 border-white border-t-transparent rounded-full" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -197,8 +284,8 @@ export default function DashboardPage() {
       <div className="container mx-auto pl-1 sm:pl-4 md:pl-8 lg:pl-16 max-w-[98%] sm:max-w-[95%] md:max-w-[90%] lg:max-w-[85%]">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl sm:text-lg md:text-xl font-bold text-white tracking-[-0.03em] font-inter">Dashboard</h1>
-            <p className="text-sm sm:text-xs md:text-sm text-zinc-400 tracking-[-0.03em] font-inter">Visualize o desempenho da sua clínica</p>
+            <h1 className="text-xl sm:text-lg md:text-xl font-bold text-white tracking-[-0.03em] font-inter">Security Dashboard</h1>
+            <p className="text-sm sm:text-xs md:text-sm text-zinc-400 tracking-[-0.03em] font-inter">Monitor your security status</p>
           </div>
 
           <div className="flex items-center gap-2 mt-4 md:mt-0">
@@ -207,24 +294,105 @@ export default function DashboardPage() {
               onValueChange={setSelectedPeriod}
             >
               <SelectTrigger className="w-full sm:w-[180px] h-10 sm:h-8 bg-zinc-800/50 border-zinc-700 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] transition-all duration-300 rounded-2xl text-zinc-300 hover:bg-zinc-800 text-sm sm:text-xs">
-                <SelectValue placeholder="Escolha o período" />
+                <SelectValue placeholder="Select period" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="7d">Últimos 7 dias</SelectItem>
-                <SelectItem value="30d">Últimos 30 dias</SelectItem>
-                <SelectItem value="90d">Últimos 90 dias</SelectItem>
-                <SelectItem value="year">Este ano</SelectItem>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="90d">Last 90 days</SelectItem>
+                <SelectItem value="year">This year</SelectItem>
               </SelectContent>
             </Select>
 
             <Button
-              onClick={fetchDashboardData}
+              onClick={fetchSecurityData}
               className="h-10 sm:h-8 bg-zinc-800/50 border-zinc-700 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] transition-all duration-300 rounded-2xl text-zinc-300 hover:bg-zinc-800 text-sm sm:text-xs"
             >
               <ArrowPathIcon className="h-4 w-4 sm:h-3.5 sm:w-3.5 mr-2 sm:mr-1.5" />
-              Atualizar
+              Refresh
             </Button>
           </div>
+        </div>
+
+        {/* Status Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card className="bg-zinc-900/50 border-zinc-800 shadow-lg">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-zinc-400">Protection Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <ShieldCheckIcon className={`h-8 w-8 ${protectionStatus.statusColor}`} />
+                  <div className="ml-3">
+                    <p className="text-2xl font-bold text-white">{protectionStatus.statusText}</p>
+                    <p className="text-sm text-zinc-400">
+                      {securityData?.endpoints ? (
+                        `${securityData.endpoints.protected} of ${securityData.endpoints.total} protected`
+                      ) : (
+                        'Loading...'
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-zinc-900/50 border-zinc-800 shadow-lg">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-zinc-400">Active Threats</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <ShieldExclamationIcon className="h-8 w-8 text-red-500" />
+                  <div className="ml-3">
+                    <p className="text-2xl font-bold text-white">{securityData?.threats?.active || 0}</p>
+                    <p className="text-sm text-zinc-400">{securityData?.threats?.blocked || 0} blocked</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-zinc-900/50 border-zinc-800 shadow-lg">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-zinc-400">Compliance Score</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <LockClosedIcon className="h-8 w-8 text-blue-500" />
+                  <div className="ml-3">
+                    <p className="text-2xl font-bold text-white">{securityData?.compliance?.score || 0}%</p>
+                    <p className="text-sm text-zinc-400">{securityData?.compliance?.criticalIssues || 0} critical issues</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-zinc-900/50 border-zinc-800 shadow-lg">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-zinc-400">Backup Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <ServerIcon className="h-8 w-8 text-purple-500" />
+                  <div className="ml-3">
+                    <p className="text-2xl font-bold text-white">{securityData?.backup?.protected || 0}</p>
+                    <p className="text-sm text-zinc-400">
+                      Last backup: {securityData?.backup?.lastBackup ? 
+                        new Date(securityData.backup.lastBackup).toLocaleDateString() : 
+                        'Never'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -233,446 +401,138 @@ export default function DashboardPage() {
               value="overview" 
               className="data-[state=active]:bg-zinc-900 data-[state=active]:text-white data-[state=active]:border-b-0 text-zinc-400 hover:text-white transition-colors rounded-xl text-xs"
             >
-              Visão Geral
+              Overview
             </TabsTrigger>
             <TabsTrigger 
               value="details" 
               className="data-[state=active]:bg-zinc-900 data-[state=active]:text-white data-[state=active]:border-b-0 text-zinc-400 hover:text-white transition-colors rounded-xl text-xs"
             >
-              Detalhamento
+              Details
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="overview" className="mt-0">
-            {/* Cards principais */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <Card className="bg-zinc-900/50 border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-300 rounded-2xl">
-                <CardHeader className="pb-2 sm:pb-1 pt-4 sm:pt-3 px-6 sm:px-4">
-                  <CardTitle className="text-base sm:text-sm md:text-base font-bold flex items-center text-white tracking-[-0.03em] font-inter">
-                    <CurrencyDollarIcon className="h-5 w-5 sm:h-4 sm:w-4 mr-2 text-emerald-500" />
-                    Faturamento
-                  </CardTitle>
-                  <CardDescription className="text-sm sm:text-xs text-zinc-400 tracking-[-0.03em] font-inter">
-                    Receita no período selecionado
-                  </CardDescription>
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="bg-zinc-900/50 border-zinc-800 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg text-white">Endpoint Protection</CardTitle>
+                  <CardDescription className="text-zinc-400">Status of your protected devices</CardDescription>
                 </CardHeader>
-                <CardContent className="pt-0 pb-4 sm:pb-3 px-6 sm:px-4">
-                  <div className="flex items-end justify-between">
-                    <p className="text-2xl sm:text-xl md:text-2xl font-semibold text-white">
-                      {loading ? (
-                        <Skeleton className="h-9 w-24 bg-zinc-800" />
-                      ) : (
-                        `R$ ${dashboardData?.revenue?.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) || '0'}`
-                      )}
-                    </p>
-                    <Badge variant="outline" className="bg-emerald-950/50 text-emerald-400 border-emerald-800 text-sm sm:text-xs">
-                      <ArrowTrendingUpIcon className="h-3.5 w-3.5 sm:h-3 sm:w-3 mr-1" />
-                      {loading ? <Skeleton className="h-4 w-12" /> : '15%'}
-                    </Badge>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-zinc-400">Protected</span>
+                      <Badge className="bg-green-900/50 text-green-400 border-green-800">
+                        {securityData?.endpoints?.protected || 0}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-zinc-400">At Risk</span>
+                      <Badge className="bg-yellow-900/50 text-yellow-400 border-yellow-800">
+                        {securityData?.endpoints?.atRisk || 0}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-zinc-400">Total</span>
+                      <Badge className="bg-blue-900/50 text-blue-400 border-blue-800">
+                        {securityData?.endpoints?.total || 0}
+                      </Badge>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-zinc-900/50 border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-300 rounded-2xl">
-                <CardHeader className="pb-2 sm:pb-1 pt-4 sm:pt-3 px-6 sm:px-4">
-                  <CardTitle className="text-base sm:text-sm md:text-base font-bold flex items-center text-white tracking-[-0.03em] font-inter">
-                    <UsersIcon className="h-5 w-5 sm:h-4 sm:w-4 mr-2 text-blue-500" />
-                    Leads
-                  </CardTitle>
-                  <CardDescription className="text-sm sm:text-xs text-zinc-400 tracking-[-0.03em] font-inter">
-                    Total de leads capturados
-                  </CardDescription>
+              <Card className="bg-zinc-900/50 border-zinc-800 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg text-white">Threat Analysis</CardTitle>
+                  <CardDescription className="text-zinc-400">Recent security incidents</CardDescription>
                 </CardHeader>
-                <CardContent className="pt-0 pb-4 sm:pb-3 px-6 sm:px-4">
-                  <div className="flex items-end justify-between">
-                    <p className="text-2xl sm:text-xl md:text-2xl font-semibold text-white">
-                      {loading ? (
-                        <Skeleton className="h-9 w-16 bg-zinc-800" />
-                      ) : (
-                        dashboardData?.totalLeads?.toLocaleString('pt-BR') || '0'
-                      )}
-                    </p>
-                    <Badge variant="outline" className="bg-blue-950/50 text-blue-400 border-blue-800 text-sm sm:text-xs">
-                      <ArrowTrendingUpIcon className="h-3.5 w-3.5 sm:h-3 sm:w-3 mr-1" />
-                      {loading ? <Skeleton className="h-4 w-12" /> : '12%'}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-zinc-900/50 border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-300 rounded-2xl">
-                <CardHeader className="pb-2 sm:pb-1 pt-4 sm:pt-3 px-6 sm:px-4">
-                  <CardTitle className="text-base sm:text-sm md:text-base font-bold flex items-center text-white tracking-[-0.03em] font-inter">
-                    <RocketLaunchIcon className="h-5 w-5 sm:h-4 sm:w-4 mr-2 text-purple-500" />
-                    Conversão
-                  </CardTitle>
-                  <CardDescription className="text-sm sm:text-xs text-zinc-400 tracking-[-0.03em] font-inter">
-                    Taxa de conversão média
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0 pb-4 sm:pb-3 px-6 sm:px-4">
-                  <div className="flex items-end justify-between">
-                    <p className="text-2xl sm:text-xl md:text-2xl font-semibold text-white">
-                      {loading ? (
-                        <Skeleton className="h-9 w-16 bg-zinc-800" />
-                      ) : (
-                        `${(dashboardData?.conversionRate || 0).toFixed(1)}%`
-                      )}
-                    </p>
-                    <Badge variant="outline" className="bg-purple-950/50 text-purple-400 border-purple-800 text-sm sm:text-xs">
-                      <ArrowTrendingUpIcon className="h-3.5 w-3.5 sm:h-3 sm:w-3 mr-1" />
-                      {loading ? <Skeleton className="h-4 w-12" /> : '5%'}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-zinc-900/50 border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-300 rounded-2xl">
-                <CardHeader className="pb-2 sm:pb-1 pt-4 sm:pt-3 px-6 sm:px-4">
-                  <CardTitle className="text-base sm:text-sm md:text-base font-bold flex items-center text-white tracking-[-0.03em] font-inter">
-                    <UserPlusIcon className="h-5 w-5 sm:h-4 sm:w-4 mr-2 text-amber-500" />
-                    Indicações
-                  </CardTitle>
-                  <CardDescription className="text-sm sm:text-xs text-zinc-400 tracking-[-0.03em] font-inter">
-                    Total de indicações
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0 pb-4 sm:pb-3 px-6 sm:px-4">
-                  <div className="flex items-end justify-between">
-                    <p className="text-2xl sm:text-xl md:text-2xl font-semibold text-white">
-                      {loading ? (
-                        <Skeleton className="h-9 w-16 bg-zinc-800" />
-                      ) : (
-                        dashboardData?.totalIndications?.toLocaleString('pt-BR') || '0'
-                      )}
-                    </p>
-                    <Badge variant="outline" className="bg-amber-950/50 text-amber-400 border-amber-800 text-sm sm:text-xs">
-                      <ArrowTrendingUpIcon className="h-3.5 w-3.5 sm:h-3 sm:w-3 mr-1" />
-                      {loading ? <Skeleton className="h-4 w-12" /> : '8%'}
-                    </Badge>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-zinc-400">Active Threats</span>
+                      <Badge className="bg-red-900/50 text-red-400 border-red-800">
+                        {securityData?.threats?.active || 0}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-zinc-400">Blocked</span>
+                      <Badge className="bg-green-900/50 text-green-400 border-green-800">
+                        {securityData?.threats?.blocked || 0}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-zinc-400">Resolved</span>
+                      <Badge className="bg-blue-900/50 text-blue-400 border-blue-800">
+                        {securityData?.threats?.resolved || 0}
+                      </Badge>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
-
-            {/* Gráficos */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <Card className="bg-zinc-900/50 border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-300 rounded-2xl">
-                <CardHeader className="pb-1 pt-3 px-4">
-                  <CardTitle className="text-sm md:text-base font-bold text-white tracking-[-0.03em] font-inter">
-                    Fontes de Tráfego
-                  </CardTitle>
-                  <CardDescription className="text-xs text-zinc-400 tracking-[-0.03em] font-inter">
-                    Principais origens dos leads
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pb-3 px-4">
-                  <div className="h-[220px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={sourceChartData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {sourceChartData.map((entry, index) => (
-                            <Cell 
-                              key={`cell-${index}`} 
-                              fill={[
-                                '#0070df',
-                                '#00a3ff',
-                                '#00c7ff',
-                                '#00e1ff',
-                              ][index % 4]} 
-                            />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#18181b',
-                            border: '1px solid #27272a',
-                            borderRadius: '8px',
-                            color: '#fff'
-                          }}
-                        />
-                        <Legend 
-                          formatter={(value) => <span className="text-zinc-300">{value}</span>}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-zinc-900/50 border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-300 rounded-2xl">
-                <CardHeader className="pb-1 pt-3 px-4">
-                  <CardTitle className="text-sm md:text-base font-bold text-white tracking-[-0.03em] font-inter">
-                    Top Indicações
-                  </CardTitle>
-                  <CardDescription className="text-xs text-zinc-400 tracking-[-0.03em] font-inter">
-                    Indicações com mais leads
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pb-3 px-4">
-                  <div className="h-[220px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={indicationChartData}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <defs>
-                          <linearGradient id="colorBar" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#0070df" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#0070df" stopOpacity={0.2}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                        <XAxis 
-                          dataKey="name" 
-                          stroke="#71717a"
-                          tick={{ fill: '#71717a', fontSize: 12 }}
-                          axisLine={{ stroke: '#27272a' }}
-                        />
-                        <YAxis 
-                          stroke="#71717a"
-                          tick={{ fill: '#71717a', fontSize: 12 }}
-                          axisLine={{ stroke: '#27272a' }}
-                        />
-                        <Tooltip
-                          contentStyle={{ 
-                            backgroundColor: '#18181b',
-                            border: '1px solid #27272a',
-                            borderRadius: '8px',
-                            color: '#fff'
-                          }}
-                        />
-                        <Bar dataKey="leads" fill="url(#colorBar)" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="bg-zinc-900/50 border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-300 rounded-2xl mb-6">
-              <CardHeader className="pb-1 pt-3 px-4">
-                <CardTitle className="text-sm md:text-base font-bold text-white tracking-[-0.03em] font-inter">
-                  Crescimento de Receita
-                </CardTitle>
-                <CardDescription className="text-xs text-zinc-400 tracking-[-0.03em] font-inter">
-                  Evolução do faturamento ao longo do tempo
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pb-3 px-4">
-                <div className="h-[250px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={[
-                        { name: 'Jan', value: 4000 },
-                        { name: 'Fev', value: 3000 },
-                        { name: 'Mar', value: 2000 },
-                        { name: 'Abr', value: 2780 },
-                        { name: 'Mai', value: 1890 },
-                        { name: 'Jun', value: 2390 },
-                        { name: 'Jul', value: 3490 },
-                      ]}
-                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                    >
-                      <defs>
-                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#0070df" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#0070df" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                      <XAxis 
-                        dataKey="name" 
-                        stroke="#71717a"
-                        tick={{ fill: '#71717a', fontSize: 12 }}
-                        axisLine={{ stroke: '#27272a' }}
-                      />
-                      <YAxis 
-                        stroke="#71717a"
-                        tick={{ fill: '#71717a', fontSize: 12 }}
-                        axisLine={{ stroke: '#27272a' }}
-                      />
-                      <Tooltip
-                        contentStyle={{ 
-                          backgroundColor: '#18181b',
-                          border: '1px solid #27272a',
-                          borderRadius: '8px',
-                          color: '#fff'
-                        }}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="value" 
-                        stroke="#0070df" 
-                        fillOpacity={1} 
-                        fill="url(#colorRevenue)" 
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-zinc-900/50 border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-300 rounded-2xl mt-8">
-              <CardHeader>
-                <CardTitle className="text-base md:text-lg font-bold text-white tracking-[-0.03em] font-inter">Estatísticas</CardTitle>
-                <CardDescription className="text-xs md:text-sm text-zinc-400 tracking-[-0.03em] font-inter">
-                  Métricas e indicadores de desempenho
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-sm text-zinc-400 mb-1">Taxa de Conversão</p>
-                    <div className="flex items-center">
-                      <div className="w-full bg-zinc-800 h-2 rounded-full mr-3">
-                        <div 
-                          className="bg-gradient-to-r from-[#0070df] to-[#0070df]/80 h-2 rounded-full" 
-                          style={{ width: `${Math.min(dashboardData?.conversionRate || 0, 100)}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-sm text-white font-medium">
-                        {Math.min(dashboardData?.conversionRate || 0, 100)}%
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <Separator className="bg-zinc-800" />
-                  
-                  <div>
-                    <p className="text-sm text-zinc-400 mb-1">Eficiência de Captura</p>
-                    <div className="flex items-center">
-                      <div className="w-full bg-zinc-800 h-2 rounded-full mr-3">
-                        <div 
-                          className="bg-gradient-to-r from-[#eaf212] to-[#eaf212]/80 h-2 rounded-full" 
-                          style={{ width: `${Math.min(dashboardData?.clickToLeadRate || 0, 100)}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-sm text-white font-medium">
-                        {Math.min(dashboardData?.clickToLeadRate || 0, 100)}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
-          <TabsContent value="details" className="mt-0">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="bg-zinc-900/50 border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-300 rounded-2xl lg:col-span-2">
-                <CardHeader>
-                  <CardTitle className="text-base md:text-lg font-bold text-white tracking-[-0.03em] font-inter">Todos os Indicadores</CardTitle>
-                  <CardDescription className="text-xs md:text-sm text-zinc-400 tracking-[-0.03em] font-inter">
-                    Detalhamento completo dos links de indicação
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <p className="text-zinc-400">Carregando...</p>
-                  ) : dashboardData?.topIndications && dashboardData.topIndications.length > 0 ? (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-12 text-sm text-zinc-500 pb-2 border-b border-zinc-800">
-                        <div className="col-span-5">INDICADOR</div>
-                        <div className="col-span-4">LINK</div>
-                        <div className="col-span-2 text-right">LEADS</div>
-                        <div className="col-span-1 text-right">CLIQUES</div>
-                      </div>
-                      {dashboardData?.topIndications?.map((indication) => (
-                        <div key={indication.id} className="grid grid-cols-12 items-center py-3 hover:bg-zinc-800/50 rounded-md transition-colors">
-                          <div className="col-span-5 text-white font-medium">{indication.name || indication.slug}</div>
-                          <div className="col-span-4 text-sm text-zinc-400 truncate">
-                            med1.app/{session?.user?.name || '...'}/{indication.slug}
-                          </div>
-                          <div className="col-span-2 text-right">
-                            <Badge className="bg-blue-950/50 text-blue-400 border-blue-800">
-                              {indication._count.leads}
-                            </Badge>
-                          </div>
-                          <div className="col-span-1 text-right">
-                            <Badge variant="outline" className="border-zinc-700 text-zinc-400">
-                              {indication._count.events}
-                            </Badge>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="bg-zinc-800/50 rounded-lg p-6 text-center">
-                      <p className="text-zinc-400">Nenhum indicador registrado ainda.</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="bg-zinc-900/50 border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-300 rounded-2xl">
-                <CardHeader>
-                  <CardTitle className="text-base md:text-lg font-bold text-white tracking-[-0.03em] font-inter">Estatísticas</CardTitle>
-                  <CardDescription className="text-xs md:text-sm text-zinc-400 tracking-[-0.03em] font-inter">
-                    Métricas e indicadores de desempenho
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div>
-                      <p className="text-sm text-zinc-400 mb-1">Taxa de Conversão</p>
-                      <div className="flex items-center">
-                        <div className="w-full bg-zinc-800 h-2 rounded-full mr-3">
-                          <div 
-                            className="bg-gradient-to-r from-[#0070df] to-[#0070df]/80 h-2 rounded-full" 
-                            style={{ width: `${Math.min(dashboardData?.conversionRate || 0, 100)}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-sm text-white font-medium">
-                          {Math.min(dashboardData?.conversionRate || 0, 100)}%
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <Separator className="bg-zinc-800" />
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-zinc-400 mb-1">Total de Cliques</p>
-                        <p className="text-xl font-medium text-white">{dashboardData?.totalClicks || 0}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-zinc-400 mb-1">Eficiência</p>
-                        <p className="text-xl font-medium text-white">
-                          {dashboardData?.totalClicks 
-                            ? (dashboardData.totalLeads / dashboardData.totalClicks).toFixed(2) 
-                            : "0.00"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-zinc-400 mb-1">Leads por Link</p>
-                        <p className="text-xl font-medium text-white">
-                          {dashboardData?.totalIndications 
-                            ? (dashboardData.totalLeads / dashboardData.totalIndications).toFixed(1) 
-                            : "0.0"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-zinc-400 mb-1">Cliques por Link</p>
-                        <p className="text-xl font-medium text-white">
-                          {dashboardData?.totalIndications 
-                            ? (dashboardData.totalClicks / dashboardData.totalIndications).toFixed(1) 
-                            : "0.0"}
-                        </p>
-                      </div>
-                    </div>
+          <TabsContent value="details" className="space-y-4">
+            <Card className="bg-zinc-900/50 border-zinc-800 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-lg text-white">Compliance Details</CardTitle>
+                <CardDescription className="text-zinc-400">Security compliance status</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-zinc-400">Compliance Score</span>
+                    <Badge className="bg-blue-900/50 text-blue-400 border-blue-800">
+                      {securityData?.compliance?.score || 0}%
+                    </Badge>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-zinc-400">Critical Issues</span>
+                    <Badge className="bg-red-900/50 text-red-400 border-red-800">
+                      {securityData?.compliance?.criticalIssues || 0}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-zinc-400">Warnings</span>
+                    <Badge className="bg-yellow-900/50 text-yellow-400 border-yellow-800">
+                      {securityData?.compliance?.warnings || 0}
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-zinc-900/50 border-zinc-800 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-lg text-white">Backup Information</CardTitle>
+                <CardDescription className="text-zinc-400">Data protection status</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-zinc-400">Protected Devices</span>
+                    <Badge className="bg-purple-900/50 text-purple-400 border-purple-800">
+                      {securityData?.backup?.protected || 0}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-zinc-400">Total Size</span>
+                    <Badge className="bg-blue-900/50 text-blue-400 border-blue-800">
+                      {securityData?.backup?.totalSize || '0 GB'}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-zinc-400">Last Backup</span>
+                    <Badge className="bg-green-900/50 text-green-400 border-green-800">
+                      {securityData?.backup?.lastBackup ? 
+                        new Date(securityData.backup.lastBackup).toLocaleDateString() : 
+                        'Never'}
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
