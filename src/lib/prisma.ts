@@ -6,7 +6,7 @@ declare global {
 
 const prismaClientSingleton = () => {
   return new PrismaClient({
-    log: ['error']
+    log: ['error', 'warn', 'info']
   });
 };
 

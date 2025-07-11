@@ -14,6 +14,11 @@ import {
   ShoppingBagIcon,
   DocumentTextIcon,
   ShieldCheckIcon,
+  ComputerDesktopIcon,
+  DevicePhoneMobileIcon,
+  EnvelopeIcon,
+  CloudIcon,
+  ClipboardDocumentCheckIcon,
 } from '@heroicons/react/24/outline';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -23,6 +28,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { UserDropdown } from "@/components/UserDropdown";
 
 interface NavItem {
   href: string;
@@ -45,7 +51,15 @@ export default function Navigation() {
   const protectedRoutes = [
     '/dashboard',
     '/dashboard/security',
-    '/profile'
+    '/dashboard/endpoint-protection',
+    '/dashboard/mobile-security',
+    '/dashboard/email-security',
+    '/dashboard/cloud-protection',
+    '/dashboard/backup',
+    '/dashboard/compliance',
+    '/profile',
+    '/settings',
+    '/documents'  // Added documents route
   ];
 
   // Só mostrar navegação em rotas protegidas
@@ -60,29 +74,61 @@ export default function Navigation() {
       items: [
         {
           href: '/dashboard',
-          label: 'Dashboard',
+          label: 'Visão Geral',
           icon: ChartBarIcon,
-          description: 'Visão geral'
+          description: 'Visão geral da segurança'
+        }
+      ]
+    },
+    {
+      title: "Proteção",
+      items: [
+        {
+          href: '/dashboard/endpoint-protection',
+          label: 'KRXShield™',
+          icon: ComputerDesktopIcon,
+          description: 'Proteção de Endpoints'
         },
+        {
+          href: '/dashboard/mobile-security',
+          label: 'KRXMobile™',
+          icon: DevicePhoneMobileIcon,
+          description: 'Segurança Mobile'
+        },
+        {
+          href: '/dashboard/email-security',
+          label: 'KRXMail™',
+          icon: EnvelopeIcon,
+          description: 'Segurança de Email'
+        },
+        {
+          href: '/dashboard/cloud-protection',
+          label: 'KRXCloud™',
+          icon: CloudIcon,
+          description: 'Proteção Cloud'
+        },
+        {
+          href: '/dashboard/backup',
+          label: 'KRXBackup™',
+          icon: DocumentTextIcon,
+          description: 'Backup & Recuperação'
+        }
+      ]
+    },
+    {
+      title: "Gestão",
+      items: [
         {
           href: '/dashboard/security',
           label: 'Segurança',
           icon: ShieldCheckIcon,
-          description: 'Gerenciar segurança',
-          items: [
-            {
-              href: '/dashboard/security',
-              label: 'Acronis',
-              icon: ShieldCheckIcon,
-              description: 'Gerenciar Acronis'
-            },
-            {
-              href: '/dashboard/security/bitdefender',
-              label: 'Bitdefender',
-              icon: ShieldCheckIcon,
-              description: 'Gerenciar Bitdefender'
-            }
-          ]
+          description: 'Gerenciar segurança'
+        },
+        {
+          href: '/dashboard/compliance',
+          label: 'Compliance',
+          icon: ClipboardDocumentCheckIcon,
+          description: 'Gestão de conformidade'
         }
       ]
     }
@@ -99,19 +145,19 @@ export default function Navigation() {
                 className={cn(
                   "w-full h-9 flex items-center px-2.5 transition-all duration-200 gap-2.5 rounded-lg group",
                   pathname === item.href 
-                    ? "bg-zinc-800 text-white shadow-sm" 
-                    : "text-zinc-400 hover:bg-zinc-800/50",
+                    ? "bg-[#f5f5f7]/10 text-[#f5f5f7]" 
+                    : "text-[#f5f5f7]/70 hover:bg-[#f5f5f7]/5 hover:text-[#f5f5f7]",
                   isSubItem && "pl-8",
                   className
                 )}
               >
                 <item.icon className={cn(
                   "h-[18px] w-[18px] stroke-[1.5] flex-shrink-0 transition-colors duration-200",
-                  pathname === item.href ? "text-white" : "text-zinc-400"
+                  pathname === item.href ? "text-[#f5f5f7]" : "text-[#f5f5f7]/70"
                 )} />
                 <span className={cn(
                   "text-sm font-medium whitespace-nowrap transition-colors duration-200",
-                  pathname === item.href ? "text-white" : "text-zinc-400"
+                  pathname === item.href ? "text-[#f5f5f7]" : "text-[#f5f5f7]/70"
                 )}>
                   {item.label}
                 </span>
@@ -130,7 +176,7 @@ export default function Navigation() {
   );
 
   const SectionTitle = ({ title }: { title: string }) => (
-    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider px-3 mb-2">
+    <h3 className="text-xs font-medium text-[#f5f5f7]/50 uppercase tracking-wider px-3 mb-2">
       {title}
     </h3>
   );
@@ -138,9 +184,9 @@ export default function Navigation() {
   return (
     <>
       {/* Desktop Navigation */}
-      <nav className="fixed left-0 top-0 bottom-0 w-52 transition-all duration-300 border-r border-zinc-800/50 bg-black shadow-[1px_0_5px_rgba(0,0,0,0.2)] hidden lg:block z-40">
+      <nav className="fixed left-0 top-0 bottom-0 w-52 transition-all duration-300 border-r border-[#f5f5f7]/10 bg-[#1c1d20] shadow-[1px_0_5px_rgba(0,0,0,0.2)] hidden lg:block z-40">
         <div className="flex flex-col h-full">
-          <div className="h-14 flex items-center justify-center px-4 border-b border-zinc-800/50 bg-zinc-900/50">
+          <div className="h-14 flex items-center justify-center px-4 border-b border-[#f5f5f7]/10 bg-[#1c1d20]">
             <Link href="/" className="flex items-center">
               <div className="relative w-24 h-8">
                 <Image
@@ -167,30 +213,15 @@ export default function Navigation() {
               ))}
             </nav>
           </ScrollArea>
-          <Separator className="bg-zinc-800/50" />
+          <Separator className="bg-[#f5f5f7]/10" />
           <div className="p-4">
-            <div className="flex items-center gap-2">
-              <Avatar className="h-9 w-9">
-                <AvatarImage src={session?.user?.image || undefined} />
-                <AvatarFallback>
-                  {session?.user?.name?.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="truncate">
-                <p className="text-sm font-medium text-white truncate">
-                  {session?.user?.name}
-                </p>
-                <p className="text-xs text-zinc-400 truncate">
-                  {session?.user?.email}
-                </p>
-              </div>
-            </div>
+            <UserDropdown user={session?.user} />
           </div>
         </div>
       </nav>
 
       {/* Mobile Header */}
-      <header className="fixed top-0 left-0 right-0 h-14 border-b border-zinc-800/50 bg-black shadow-[0_1px_5px_rgba(0,0,0,0.2)] z-40 lg:hidden">
+      <header className="fixed top-0 left-0 right-0 h-14 border-b border-[#f5f5f7]/10 bg-[#1c1d20] shadow-[0_1px_5px_rgba(0,0,0,0.2)] z-40 lg:hidden">
         <div className="h-full px-4 flex items-center justify-center">
           <Link href="/" className="flex items-center">
             <div className="relative w-20 h-7">
@@ -204,17 +235,7 @@ export default function Navigation() {
             </div>
           </Link>
           <div className="absolute right-4">
-            <Link href="/profile">
-              <Avatar className="h-8 w-8 ring-1 ring-zinc-800 bg-zinc-900">
-                {session?.user?.image ? (
-                  <AvatarImage src={session.user.image} alt={session.user.name || "Profile"} className="object-cover" />
-                ) : (
-                  <AvatarFallback className="bg-zinc-900">
-                    <UserCircleIcon className="h-5 w-5 text-zinc-400" />
-                  </AvatarFallback>
-                )}
-              </Avatar>
-            </Link>
+            <UserDropdown user={session?.user} />
           </div>
         </div>
       </header>

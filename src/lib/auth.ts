@@ -47,7 +47,7 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error('Email e senha são obrigatórios');
+          throw new Error('Email and password are required');
         }
 
         if (credentials.type === 'patient') {
@@ -65,16 +65,16 @@ export const authOptions: AuthOptions = {
           });
 
           if (!patient) {
-            throw new Error('Email não encontrado');
+            throw new Error('Invalid email or password');
           }
 
           if (!patient.hasPassword || !patient.password) {
-            throw new Error('Conta sem senha definida');
+            throw new Error('Password not set for this account');
           }
 
           const passwordValid = await compare(credentials.password, patient.password);
           if (!passwordValid) {
-            throw new Error('Senha incorreta');
+            throw new Error('Invalid email or password');
           }
 
           return {
@@ -103,16 +103,16 @@ export const authOptions: AuthOptions = {
         });
 
         if (!user) {
-          throw new Error('Email não encontrado');
+          throw new Error('Invalid email or password');
         }
 
         if (!user.password) {
-          throw new Error('Conta sem senha definida');
+          throw new Error('Password not set for this account');
         }
 
         const passwordValid = await compare(credentials.password, user.password);
         if (!passwordValid) {
-          throw new Error('Senha incorreta');
+          throw new Error('Invalid email or password');
         }
 
         return {

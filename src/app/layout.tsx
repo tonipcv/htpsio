@@ -5,6 +5,7 @@ import { Providers } from '@/components/providers'
 import { Toaster } from 'sonner'
 import { cn } from '@/lib/utils'
 import Script from 'next/script'
+import { ThemeProvider } from "@/components/theme-provider"
 
 const inter = Inter({
   subsets: ['latin'],
@@ -12,8 +13,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'HTSP - High Ticket Sales Platform',
-  description: 'All-in-one platform for high ticket sales',
+  title: 'HTSP.io',
+  description: 'Enterprise Security Platform',
   manifest: '/manifest.json',
   icons: {
     icon: [
@@ -59,7 +60,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning className={inter.className}>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <Script id="google-tag-manager" strategy="beforeInteractive">
           {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -68,11 +69,9 @@ export default function RootLayout({
           'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
           })(window,document,'script','dataLayer','GTM-WNKND9BM');`}
         </Script>
+        <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/sf-pro-display" />
       </head>
-      <body className={cn(
-        "min-h-screen bg-white antialiased tracking-tighter",
-        inter.className
-      )}>
+      <body className={cn(inter.className, "min-h-screen bg-background")}>
         <noscript>
           <iframe 
             src="https://www.googletagmanager.com/ns.html?id=GTM-WNKND9BM"
@@ -82,8 +81,15 @@ export default function RootLayout({
           />
         </noscript>
         <Providers>
-          {children}
-          <Toaster richColors position="top-right" />
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+            <Toaster richColors position="top-right" />
+          </ThemeProvider>
         </Providers>
       </body>
     </html>

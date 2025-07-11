@@ -27,13 +27,14 @@ function SignInContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(error || "");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMsg("");
 
     try {
-      console.log('Attempting login with:', { email, type: 'user' });
       const result = await signIn('credentials', {
         email,
         password,
@@ -42,10 +43,8 @@ function SignInContent() {
         callbackUrl
       });
 
-      console.log('Login result:', result);
-
       if (result?.error) {
-        toast.error(result.error);
+        setErrorMsg(result.error);
         return;
       }
 
@@ -55,29 +54,29 @@ function SignInContent() {
       }
     } catch (err) {
       console.error('Login error:', err);
-      toast.error("Ocorreu um erro ao tentar fazer login. Tente novamente.");
+      setErrorMsg("An error occurred while signing in. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black to-zinc-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-zinc-900/50 backdrop-blur-sm rounded-xl p-8 border border-zinc-800">
-        <div className="text-center mb-8">
+    <div className="relative min-h-screen bg-[#1c1d20] flex items-center justify-center p-4">
+      <div className="relative w-full max-w-md bg-[#1c1d20] rounded-xl p-8 border border-[#f5f5f7]/10">
+        <div className="relative text-center mb-8">
           <Image
             src="/logo.png"
             alt="Logo"
             width={48}
             height={48}
             priority
-            className="h-12 w-12 brightness-0 invert mx-auto"
+            className="relative h-12 w-12 brightness-0 invert mx-auto"
           />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="relative space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-zinc-300">
+            <Label htmlFor="email">
               Email
             </Label>
             <Input
@@ -85,16 +84,17 @@ function SignInContent() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="seu@email.com"
+              placeholder="your@email.com"
               required
-              className="bg-zinc-800/50 border-zinc-700 text-zinc-300 placeholder:text-zinc-500"
               autoComplete="email"
+              disabled={isLoading}
+              className="relative"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-zinc-300">
-              Senha
+            <Label htmlFor="password">
+              Password
             </Label>
             <Input
               id="password"
@@ -103,42 +103,43 @@ function SignInContent() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="bg-zinc-800/50 border-zinc-700 text-zinc-300 placeholder:text-zinc-500"
               autoComplete="current-password"
+              disabled={isLoading}
+              className="relative"
             />
           </div>
 
-          {error && (
-            <div className="text-red-400 text-sm">{error}</div>
+          {errorMsg && (
+            <div className="relative text-red-400 text-sm text-center">{errorMsg}</div>
           )}
 
           <Button 
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white py-6"
+            className="relative w-full bg-[#1c1d20] hover:bg-[#f5f5f7]/5 text-[#f5f5f7] border border-[#f5f5f7]/10 py-6"
           >
             {isLoading ? (
               <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-4 w-4 border border-white/30 border-t-white mr-2"></div>
-                <span>Entrando...</span>
+                <div className="animate-spin rounded-full h-4 w-4 border border-[#f5f5f7]/30 border-t-[#f5f5f7] mr-2"></div>
+                <span>Signing in...</span>
               </div>
             ) : (
-              'Entrar'
+              'Sign in'
             )}
           </Button>
 
-          <div className="text-center space-y-2">
+          <div className="relative text-center space-y-2">
             <Link 
               href="/auth/forgot-password" 
-              className="text-zinc-400 hover:text-zinc-300 text-sm block"
+              className="relative text-[#f5f5f7]/70 hover:text-[#f5f5f7] text-sm block"
             >
-              Esqueceu sua senha?
+              Forgot your password?
             </Link>
             <Link 
               href="/auth/register" 
-              className="text-zinc-400 hover:text-zinc-300 text-sm block"
+              className="relative text-[#f5f5f7]/70 hover:text-[#f5f5f7] text-sm block"
             >
-              Não tem uma conta? Cadastre-se
+              Don't have an account? Sign up
             </Link>
           </div>
         </form>

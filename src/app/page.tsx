@@ -29,7 +29,7 @@ export default function Home() {
   if (session) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black to-zinc-900 relative flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-[#1c1d20] relative flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-[400px] mx-auto text-center space-y-12">
         {/* Logo */}
         <div className="space-y-4">
@@ -41,8 +41,8 @@ export default function Home() {
             priority
             className="h-12 w-12 brightness-0 invert mx-auto"
           />
-          <p className="text-zinc-400 text-sm font-light tracking-wide">
-            Your complete ecosystem for High Ticket Sales
+          <p className="text-[#f5f5f7]/70 text-sm font-light tracking-wide">
+            Your complete ecosystem for Cyber Security
           </p>
         </div>
 
@@ -50,7 +50,7 @@ export default function Home() {
         <div className="space-y-3">
           <Link href="/auth/signin" className="block">
             <Button 
-              className="w-full py-5 bg-transparent hover:bg-white/5 text-white border border-white/10 rounded-lg text-sm font-light tracking-wide transition-all"
+              className="w-full py-5 bg-transparent hover:bg-[#f5f5f7]/5 text-[#f5f5f7] border border-[#f5f5f7]/10 rounded-lg text-sm font-light tracking-wide transition-all"
             >
               Sign in
             </Button>
@@ -59,7 +59,7 @@ export default function Home() {
           <a href="https://magic.htps.io/demo" target="_blank" rel="noopener noreferrer" className="block">
             <Button 
               variant="outline"
-              className="w-full py-5 bg-transparent hover:bg-white/5 text-zinc-400 hover:text-white border-white/10 rounded-lg text-sm font-light tracking-wide transition-all"
+              className="w-full py-5 bg-transparent hover:bg-[#f5f5f7]/5 text-[#f5f5f7]/70 hover:text-[#f5f5f7] border-[#f5f5f7]/10 rounded-lg text-sm font-light tracking-wide transition-all"
             >
               Get a demo
             </Button>

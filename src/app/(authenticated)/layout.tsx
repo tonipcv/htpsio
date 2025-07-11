@@ -22,11 +22,11 @@ export default function AuthenticatedLayout({
 
   if (status === 'loading') {
     return (
-      <div className="min-h-[100dvh] h-full bg-gray-50 flex flex-col items-center justify-center">
+      <div className="min-h-[100dvh] h-full bg-[#1c1d20] flex flex-col items-center justify-center">
         <div className="mb-8">
-          <Logo className="scale-100" variant="dark" />
+          <Logo className="scale-100" variant="light" />
         </div>
-        <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+        <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-[#f5f5f7] border-t-transparent"></div>
       </div>
     );
   }
@@ -36,9 +36,9 @@ export default function AuthenticatedLayout({
   }
 
   return (
-    <div className="min-h-screen h-full bg-background">
+    <div className="min-h-screen h-full bg-[#1c1d20]">
       <Navigation />
-      <main className="h-full min-h-[100dvh] pt-16 pb-20 lg:pt-0 lg:pb-0">
+      <main className="h-full min-h-[100dvh] lg:pl-52 pt-14 lg:pt-0">
         {children}
       </main>
     </div>

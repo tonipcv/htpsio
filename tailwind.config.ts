@@ -1,6 +1,6 @@
 import type { Config } from "tailwindcss";
 
-const config = {
+const config: Config = {
     darkMode: ["class"],
     content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -23,6 +23,7 @@ const config = {
   	extend: {
   		fontFamily: {
   			sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+  			sfpro: ["SF Pro Display", "SF Pro Text", "system-ui", "sans-serif"],
   		},
   		fontWeight: {
   			thin: '100',
@@ -33,8 +34,8 @@ const config = {
   			border: "hsl(var(--border))",
   			input: "hsl(var(--input))",
   			ring: "hsl(var(--ring))",
-  			background: "hsl(var(--background))",
-  			foreground: "hsl(var(--foreground))",
+  			background: "#1c1d20",
+  			foreground: "#ffffff",
   			gray: {
   				'750': '#2d2d3d'
   			},
@@ -89,7 +90,9 @@ const config = {
   			turquoise: {
   				DEFAULT: '#40E0D0',
   				light: '#48F0E0',
-  			}
+  			},
+  			dark: "#1c1d20",
+  			light: "#f5f5f7",
   		},
   		borderRadius: {
   			lg: "var(--radius)",

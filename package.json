@@ -12,7 +12,13 @@
     "fix-forms": "node scripts/fix-form-blocks.js",
     "migrate-leads": "ts-node scripts/migrate-leads.ts",
     "check-leads": "ts-node scripts/check-leads.ts",
-    "migrate-leads-sql": "ts-node scripts/migrate-leads-sql.ts"
+    "migrate-leads-sql": "ts-node scripts/migrate-leads-sql.ts",
+    "drop-old-tables": "tsx scripts/drop-old-tables.ts",
+    "recreate-tables": "tsx scripts/recreate-tables.ts",
+    "fix-columns": "tsx scripts/fix-columns.ts",
+    "check-tables": "tsx scripts/check-tables.ts",
+    "add-tenant-id": "tsx scripts/add-tenant-id.ts",
+    "test-connection": "tsx scripts/test-connection.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
@@ -37,6 +43,7 @@
     "@radix-ui/react-switch": "^1.1.3",
     "@radix-ui/react-tabs": "^1.1.8",
     "@radix-ui/react-tooltip": "^1.2.6",
+    "@react-pdf/renderer": "^4.3.0",
     "@tanstack/react-table": "^8.21.3",
     "@tiptap/extension-underline": "^2.11.3",
     "@tiptap/pm": "^2.11.3",
@@ -49,6 +56,7 @@
     "@types/uuid": "^10.0.0",
     "@vercel/blob": "^0.27.1",
     "bcryptjs": "^2.4.3",
+    "canvas": "^3.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -65,8 +73,12 @@
     "next": "^15.3.2",
     "next-auth": "^4.24.5",
     "next-themes": "^0.4.4",
+    "node-pdftk": "^2.1.3",
     "nodemailer": "^6.10.0",
     "openai": "^4.100.0",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^1.1.1",
+    "pdfjs-dist": "^5.3.31",
     "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
     "react-datepicker": "^8.2.1",
@@ -74,6 +86,7 @@
     "react-hot-toast": "^2.5.2",
     "react-icons": "^5.5.0",
     "react-markdown": "^9.0.3",
+    "react-pdf": "^10.0.1",
     "react-phone-input-2": "^2.15.1",
     "reactflow": "^11.11.4",
     "recharts": "^2.15.2",
@@ -102,6 +115,7 @@
     "prisma": "^6.1.0",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.3",
     "typescript": "^5"
   }
 }

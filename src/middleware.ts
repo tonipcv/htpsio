@@ -19,7 +19,8 @@ const AUTH_ROUTES = [
   '/reports',
   '/analytics',
   '/dashboard/analytics',
-  '/advanced-settings'
+  '/advanced-settings',
+  '/documents'
 ];
 
 export async function middleware(req: NextRequest) {
@@ -74,6 +75,7 @@ export const config = {
     '/reports/:path*',
     '/analytics/:path*',
     '/advanced-settings/:path*',
+    '/documents/:path*',
     '/(authenticated)/:path*'
   ]
 }; 

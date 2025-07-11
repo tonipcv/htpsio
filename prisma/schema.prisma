@@ -4,131 +4,122 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgres://postgres:899c8f829724285bcfaf@dpbdp1.easypanel.host:32130/servidor?sslmode=disable"
 }
 
 model User {
-  id              String    @id @default(cuid())
+  id              String        @id @default(cuid())
   name            String
-  email           String    @unique
+  email           String        @unique
   password        String
-  slug            String    @unique
-  createdAt       DateTime  @default(now())
+  slug            String        @unique
+  createdAt       DateTime      @default(now())
   image           String?
-  plan            String?   @default("free")
-  isPremium       Boolean   @default(false)
+  plan            String?       @default("free")
+  isPremium       Boolean       @default(false)
   acronisTenantId String?
-  subscription    Subscription?
-  devices         Device[]
   tenantId        String?
-  tenant          Tenant?   @relation(fields: [tenantId], references: [id])
+  devices         Device[]
   pages           Page[]
+  subscription    Subscription?
+  tenant          Tenant?       @relation(fields: [tenantId], references: [id])
+  documents       Document[]
+  documentDownloads DocumentDownload[]
 
   @@index([tenantId])
   @@map("users")
 }
 
 model Tenant {
-  id               String    @id @default(cuid())
+  id               String            @id @default(cuid())
   name             String
-  slug             String    @unique
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  users            User[]
+  slug             String            @unique
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   acronisTenantId  String?
+  activationStatus ActivationStatus?
+  installer        Installer?
+  protectionStatus ProtectionStatus?
+  users            User[]
 }
 
 model ActivationStatus {
-  id                    String   @id @default(uuid())
-  tenantId             String   @unique
-  tenant               Tenant   @relation(fields: [tenantId], references: [id])
-  
-  // Wizard Steps
-  installerDownloaded  Boolean  @default(false)
+  id                    String    @id @default(uuid())
+  tenantId              String    @unique
+  installerDownloaded   Boolean   @default(false)
   installerDownloadedAt DateTime?
-  
-  deviceInstalled      Boolean  @default(false)
-  deviceInstalledAt    DateTime?
-  
-  emailVerified        Boolean  @default(false)
-  emailVerifiedAt      DateTime?
-  
-  wizardCompleted      Boolean  @default(false)
-  wizardCompletedAt    DateTime?
-  
-  currentStep          String   @default("DOWNLOAD_INSTALLER") // DOWNLOAD_INSTALLER, INSTALL_DEVICE, VERIFY_EMAIL, COMPLETED
-  
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  deviceInstalled       Boolean   @default(false)
+  deviceInstalledAt     DateTime?
+  emailVerified         Boolean   @default(false)
+  emailVerifiedAt       DateTime?
+  wizardCompleted       Boolean   @default(false)
+  wizardCompletedAt     DateTime?
+  currentStep           String    @default("DOWNLOAD_INSTALLER")
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  tenant                Tenant    @relation(fields: [tenantId], references: [id])
 }
 
 model Installer {
-  id         String   @id @default(uuid())
-  tenantId   String   @unique
-  tenant     Tenant   @relation(fields: [tenantId], references: [id])
-  url        String
-  os         String   // 'windows' | 'mac'
-  createdAt  DateTime @default(now())
-  expiresAt  DateTime
-  
-  // Customização
-  brandingColor String? // Cor principal da marca
-  brandingLogo  String? // URL do logo da empresa
+  id            String   @id @default(uuid())
+  tenantId      String   @unique
+  url           String
+  os            String
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+  brandingColor String?
+  brandingLogo  String?
+  tenant        Tenant   @relation(fields: [tenantId], references: [id])
 }
 
 model ProtectionStatus {
-  id            String   @id @default(uuid())
-  tenantId      String   @unique
-  tenant        Tenant   @relation(fields: [tenantId], references: [id])
-  
-  // Status detalhado dos serviços
-  endpointOk    Boolean  @default(false)
-  endpointMessage String? // Ex: "Seu computador está protegido" ou "Antivírus desatualizado"
-  
-  emailOk       Boolean  @default(false)
-  emailMessage  String?  // Ex: "Email protegido contra ameaças" ou "Proteção de email não configurada"
-  
-  backupOk      Boolean  @default(false)
-  backupMessage String?  // Ex: "Seus arquivos estão seguros" ou "Backup desativado"
-  
-  lastUpdated   DateTime @default(now())
-  nextCheckAt   DateTime? // Próxima verificação agendada
+  id              String    @id @default(uuid())
+  tenantId        String    @unique
+  endpointOk      Boolean   @default(false)
+  endpointMessage String?
+  emailOk         Boolean   @default(false)
+  emailMessage    String?
+  backupOk        Boolean   @default(false)
+  backupMessage   String?
+  lastUpdated     DateTime  @default(now())
+  nextCheckAt     DateTime?
+  tenant          Tenant    @relation(fields: [tenantId], references: [id])
 }
 
 model Device {
-  id          String    @id @default(cuid())
-  externalId  String    @unique
-  tenantId    String
-  userId      String
-  user        User      @relation(fields: [userId], references: [id])
-  name        String
-  os          String
-  status      String
-  lastSeen    DateTime
-  version     String?
-  isIsolated  Boolean   @default(false)
-  ipAddress   String?
-  macAddress  String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  actions     SecurityAction[]
+  id         String           @id @default(cuid())
+  externalId String           @unique
+  tenantId   String
+  userId     String
+  name       String
+  os         String
+  status     String
+  lastSeen   DateTime
+  version    String?
+  isIsolated Boolean          @default(false)
+  ipAddress  String?
+  macAddress String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  user       User             @relation(fields: [userId], references: [id])
+  actions    SecurityAction[]
 
   @@unique([externalId, tenantId])
   @@index([userId])
 }
 
 model Page {
-  id           String   @id @default(uuid())
+  id           String       @id @default(uuid())
   title        String
   subtitle     String?
   slug         String
   avatarUrl    String?
-  primaryColor String   @default("#000000")
-  layout       String   @default("classic")
+  primaryColor String       @default("#000000")
+  layout       String       @default("classic")
   userId       String
-  user         User     @relation(fields: [userId], references: [id])
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  user         User         @relation(fields: [userId], references: [id])
   blocks       PageBlock[]
   socialLinks  SocialLink[]
 
@@ -141,9 +132,9 @@ model PageBlock {
   content   String
   order     Int      @default(0)
   pageId    String
-  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
 }
 
 model SocialLink {
@@ -151,20 +142,20 @@ model SocialLink {
   platform  String
   url       String
   pageId    String
-  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
 }
 
 model SecurityAction {
   id        String   @id @default(uuid())
   userId    String
   deviceId  String
-  device    Device   @relation(fields: [deviceId], references: [id])
-  action    String   // 'isolate', 'restore', 'scan', etc.
+  action    String
   reason    String?
-  status    String   // 'pending', 'completed', 'failed'
+  status    String
   timestamp DateTime @default(now())
+  device    Device   @relation(fields: [deviceId], references: [id])
 
   @@index([userId])
   @@index([deviceId])
@@ -173,9 +164,39 @@ model SecurityAction {
 model Subscription {
   id        String   @id @default(cuid())
   userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id])
   plan      String   @default("free")
   status    String   @default("active")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Document {
+  id          String            @id @default(uuid())
+  name        String
+  mimeType    String
+  size        Int
+  s3Key       String            @unique
+  userId      String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  downloads   DocumentDownload[]
+  user        User              @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model DocumentDownload {
+  id            String   @id @default(uuid())
+  documentId    String
+  userId        String
+  watermarkKey  String   @unique  // S3 key for watermarked version
+  downloadedAt  DateTime @default(now())
+  ipAddress     String?
+  userAgent     String?
+  document      Document @relation(fields: [documentId], references: [id])
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@index([documentId])
+  @@index([userId])
 }

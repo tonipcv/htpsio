@@ -1,4 +1,4 @@
-import { FileText, FormInput, GitBranch, Settings } from 'lucide-react';
+import { FileText, FormInput, GitBranch, Settings, File } from 'lucide-react';
 
 const items = [
   {
@@ -10,6 +10,11 @@ const items = [
     title: 'Formulários',
     href: '/forms',
     icon: FormInput
+  },
+  {
+    title: 'Documentos',
+    href: '/documents',
+    icon: File
   },
   {
     title: 'Pipelines',
