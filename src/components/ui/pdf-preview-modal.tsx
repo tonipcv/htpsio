@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { AlertCircle, RefreshCw, X } from 'lucide-react';
 import { Button } from './button';
+import { PDFViewer } from './pdf-viewer';
 
 interface PDFPreviewModalProps {
   isOpen: boolean;
@@ -25,12 +26,36 @@ export function PDFPreviewModal({
 }: PDFPreviewModalProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+
+  const loadPreview = async () => {
+    if (!isOpen || !documentId) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch(`/api/documents/${documentId}/preview`);
+      if (!response.ok) {
+        throw new Error('Failed to load preview');
+      }
+
+      const data = await response.json();
+      if (data.url) {
+        setPdfUrl(data.url);
+      }
+    } catch (error) {
+      setError('Error loading preview');
+      console.error('Preview error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
 
-    const loadPreview = async () => {
+    const initPreview = async () => {
       if (!isOpen || !documentId) return;
 
       try {
@@ -43,8 +68,8 @@ export function PDFPreviewModal({
         }
 
         const data = await response.json();
-        if (mounted) {
-          setViewerUrl(`/viewer/${documentId}`);
+        if (mounted && data.url) {
+          setPdfUrl(data.url);
         }
       } catch (error) {
         if (mounted) {
@@ -53,13 +78,12 @@ export function PDFPreviewModal({
         }
       } finally {
         if (mounted) {
-          // Small delay to prevent flash of loading state
-          setTimeout(() => setIsLoading(false), 100);
+          setIsLoading(false);
         }
       }
     };
 
-    loadPreview();
+    initPreview();
 
     return () => {
       mounted = false;
@@ -98,8 +122,8 @@ export function PDFPreviewModal({
                   onClick={() => {
                     setError(null);
                     setIsLoading(true);
-                    setViewerUrl(null);
-                    setTimeout(() => setViewerUrl(`/viewer/${documentId}`), 100);
+                    setPdfUrl(null);
+                    loadPreview();
                   }} 
                   variant="outline" 
                   className="gap-2 border-white/10 text-white/70 hover:text-white hover:bg-white/5"
@@ -111,15 +135,9 @@ export function PDFPreviewModal({
             </div>
           )}
 
-          {/* Viewer iframe */}
-          {viewerUrl && !error && (
-            <iframe
-              src={viewerUrl}
-              className="w-full h-full border-0 bg-[#1c1d20]"
-              sandbox="allow-same-origin allow-scripts"
-              onLoad={() => setIsLoading(false)}
-              onError={() => setError('Erro ao carregar o visualizador')}
-            />
+          {/* PDF Viewer */}
+          {pdfUrl && !error && (
+            <PDFViewer url={pdfUrl} />
           )}
         </div>
       </DialogContent>
