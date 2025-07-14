@@ -15,6 +15,7 @@ declare module 'next-auth' {
     email: string;
     name: string;
     type: 'user' | 'patient';
+    role?: string;
     userSlug?: string;
     image?: string | null;
     plan?: string;
@@ -96,6 +97,7 @@ export const authOptions: AuthOptions = {
             name: true,
             password: true,
             slug: true,
+            role: true,
             image: true,
             plan: true,
             isPremium: true
@@ -120,6 +122,7 @@ export const authOptions: AuthOptions = {
           email: user.email,
           name: user.name,
           type: 'user' as const,
+          role: user.role,
           userSlug: user.slug,
           image: user.image,
           plan: user.plan || undefined,
@@ -133,6 +136,7 @@ export const authOptions: AuthOptions = {
       if (user) {
         token.id = user.id;
         token.type = user.type;
+        token.role = user.role;
         token.userSlug = user.userSlug;
         token.image = user.image;
         token.plan = user.plan;
@@ -149,6 +153,7 @@ export const authOptions: AuthOptions = {
           id: token.id,
           email: token.email,
           type: token.type as 'user' | 'patient',
+          role: token.role as string | undefined,
           userSlug: token.userSlug as string | undefined,
           image: token.image as string | null | undefined,
           plan: token.plan,

@@ -19,6 +19,7 @@ import {
   EnvelopeIcon,
   CloudIcon,
   ClipboardDocumentCheckIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -47,26 +48,7 @@ export default function Navigation() {
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  // Lista de rotas protegidas onde a navegação deve aparecer
-  const protectedRoutes = [
-    '/dashboard',
-    '/dashboard/security',
-    '/dashboard/endpoint-protection',
-    '/dashboard/mobile-security',
-    '/dashboard/email-security',
-    '/dashboard/cloud-protection',
-    '/dashboard/backup',
-    '/dashboard/compliance',
-    '/profile',
-    '/settings',
-    '/documents'  // Added documents route
-  ];
-
-  // Só mostrar navegação em rotas protegidas
-  const isProtectedRoute = protectedRoutes.some(route => pathname?.startsWith(route));
-  if (!isProtectedRoute) {
-    return null;
-  }
+  const isAdmin = session?.user?.role === "admin";
 
   const navSections: NavSection[] = [
     {
@@ -80,58 +62,84 @@ export default function Navigation() {
         }
       ]
     },
-    {
-      title: "Proteção",
-      items: [
-        {
-          href: '/dashboard/endpoint-protection',
-          label: 'KRXShield™',
-          icon: ComputerDesktopIcon,
-          description: 'Proteção de Endpoints'
-        },
-        {
-          href: '/dashboard/mobile-security',
-          label: 'KRXMobile™',
-          icon: DevicePhoneMobileIcon,
-          description: 'Segurança Mobile'
-        },
-        {
-          href: '/dashboard/email-security',
-          label: 'KRXMail™',
-          icon: EnvelopeIcon,
-          description: 'Segurança de Email'
-        },
-        {
-          href: '/dashboard/cloud-protection',
-          label: 'KRXCloud™',
-          icon: CloudIcon,
-          description: 'Proteção Cloud'
-        },
-        {
-          href: '/dashboard/backup',
-          label: 'KRXBackup™',
-          icon: DocumentTextIcon,
-          description: 'Backup & Recuperação'
-        }
-      ]
-    },
-    {
-      title: "Gestão",
-      items: [
-        {
-          href: '/dashboard/security',
-          label: 'Segurança',
-          icon: ShieldCheckIcon,
-          description: 'Gerenciar segurança'
-        },
-        {
-          href: '/dashboard/compliance',
-          label: 'Compliance',
-          icon: ClipboardDocumentCheckIcon,
-          description: 'Gestão de conformidade'
-        }
-      ]
-    }
+    ...(isAdmin ? [
+      {
+        title: "Proteção",
+        items: [
+          {
+            href: '/dashboard/endpoint-protection',
+            label: 'KRXShield™',
+            icon: ComputerDesktopIcon,
+            description: 'Proteção de Endpoints'
+          },
+          {
+            href: '/dashboard/mobile-security',
+            label: 'KRXMobile™',
+            icon: DevicePhoneMobileIcon,
+            description: 'Segurança Mobile'
+          },
+          {
+            href: '/dashboard/email-security',
+            label: 'KRXMail™',
+            icon: EnvelopeIcon,
+            description: 'Segurança de Email'
+          },
+          {
+            href: '/dashboard/cloud-protection',
+            label: 'KRXCloud™',
+            icon: CloudIcon,
+            description: 'Proteção Cloud'
+          },
+          {
+            href: '/dashboard/backup',
+            label: 'KRXBackup™',
+            icon: DocumentTextIcon,
+            description: 'Backup & Recuperação'
+          }
+        ]
+      },
+      {
+        title: "Gestão",
+        items: [
+          {
+            href: '/dashboard/security',
+            label: 'Segurança',
+            icon: ShieldCheckIcon,
+            description: 'Gerenciar segurança'
+          },
+          {
+            href: '/dashboard/compliance',
+            label: 'Compliance',
+            icon: ClipboardDocumentCheckIcon,
+            description: 'Gestão de conformidade'
+          },
+          {
+            href: '/documents',
+            label: 'Documents',
+            icon: DocumentTextIcon,
+            description: 'Document Management'
+          },
+          {
+            href: '/clients',
+            label: 'Clients',
+            icon: UserGroupIcon,
+            description: 'Client Management'
+          }
+        ]
+      }
+    ] : [
+      {
+        title: "Documentos",
+        items: [
+          {
+            href: '/documents',
+            label: 'Meus Documentos',
+            icon: DocumentTextIcon,
+            description: 'Visualizar documentos compartilhados'
+          }
+        ]
+      }
+    ])
   ];
 
   const NavItemComponent = ({ item, className, isSubItem = false }: { item: NavItem, className?: string, isSubItem?: boolean }) => (

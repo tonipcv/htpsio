@@ -98,6 +98,11 @@ export async function GET(req: NextRequest) {
     // Get user first
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
+      select: {
+        id: true,
+        role: true,
+        adminId: true,
+      }
     });
     console.log("User:", user); // Debug user
 
@@ -105,23 +110,63 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Find documents by userId instead of email
-    const documents = await prisma.document.findMany({
-      where: {
-        userId: user.id,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
+    let documents;
+
+    if (user.role === "admin") {
+      // Admin vê todos os documentos que ele criou
+      documents = await prisma.document.findMany({
+        where: {
+          userId: user.id,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+          documentAccess: {
+            include: {
+              client: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                }
+              }
+            }
+          }
+        },
+      });
+    } else if (user.role === "client") {
+      // Cliente vê apenas documentos compartilhados com ele
+      documents = await prisma.document.findMany({
+        where: {
+          documentAccess: {
+            some: {
+              clientId: user.id,
+            },
           },
         },
-      },
-    });
+        orderBy: {
+          createdAt: "desc",
+        },
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
+    } else {
+      return NextResponse.json({ error: "Invalid user role" }, { status: 403 });
+    }
+
     console.log("Documents found:", documents); // Debug documents
 
     return NextResponse.json(documents);

@@ -13,20 +13,32 @@ model User {
   email           String        @unique
   password        String
   slug            String        @unique
+  role            String        @default("admin") // "admin" ou "client"
+  adminId         String?       // ID do admin que cadastrou o cliente (null para admins)
   createdAt       DateTime      @default(now())
   image           String?
   plan            String?       @default("free")
   isPremium       Boolean       @default(false)
   acronisTenantId String?
   tenantId        String?
+  resetToken      String?       // Token for password reset/creation
+  resetTokenExpiry DateTime?    // Expiry time for reset token
   devices         Device[]
   pages           Page[]
   subscription    Subscription?
   tenant          Tenant?       @relation(fields: [tenantId], references: [id])
   documents       Document[]
   documentDownloads DocumentDownload[]
+  
+  // Relacionamentos para o sistema de clientes
+  clients         User[]        @relation("AdminClient")
+  admin           User?         @relation("AdminClient", fields: [adminId], references: [id])
+  documentAccess  DocumentAccess[]
+  grantedAccess   DocumentAccess[] @relation("GrantedBy")
 
   @@index([tenantId])
+  @@index([adminId])
+  @@index([role])
   @@map("users")
 }
 
@@ -182,6 +194,7 @@ model Document {
   updatedAt   DateTime          @updatedAt
   downloads   DocumentDownload[]
   user        User              @relation(fields: [userId], references: [id])
+  documentAccess  DocumentAccess[]
 
   @@index([userId])
 }
@@ -199,4 +212,19 @@ model DocumentDownload {
 
   @@index([documentId])
   @@index([userId])
+}
+
+model DocumentAccess {
+  id           String    @id @default(uuid())
+  documentId   String
+  clientId     String    // ID do cliente (User com role="client")
+  grantedAt    DateTime  @default(now())
+  grantedBy    String    // ID do admin que concedeu acesso
+  document     Document  @relation(fields: [documentId], references: [id])
+  client       User      @relation(fields: [clientId], references: [id])
+  admin        User      @relation("GrantedBy", fields: [grantedBy], references: [id])
+
+  @@unique([documentId, clientId])
+  @@index([documentId])
+  @@index([clientId])
 }

@@ -29,6 +29,12 @@ export async function GET(
     // Get user
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
+      select: {
+        id: true,
+        role: true,
+        name: true,
+        email: true,
+      }
     });
     console.log("👤 User:", user);
 
@@ -39,11 +45,33 @@ export async function GET(
     // Get document
     const document = await prisma.document.findFirst({
       where: { id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+          }
+        },
+        documentAccess: {
+          where: {
+            clientId: user.id,
+          }
+        }
+      }
     });
     console.log("📄 Document:", document);
 
     if (!document) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
+    }
+
+    // Verificar permissões
+    const hasAccess = 
+      user.role === "admin" && document.userId === user.id || // Admin dono do documento
+      user.role === "client" && document.documentAccess.length > 0; // Cliente com acesso concedido
+
+    if (!hasAccess) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     // Get MinIO client
@@ -95,7 +123,15 @@ export async function GET(
 
       // Add watermark and save to watermarked folder
       console.log("💧 Adding watermark to PDF...");
-      const watermarkedContent = await addWatermark(fileContent, user.name || user.email);
+      const watermarkContent = user.role === "client" 
+        ? `Client: ${user.name || user.email} | ID: ${user.id.slice(0, 8)}`
+        : `${user.name || user.email} | ${new Date().toISOString().slice(0, 10)}`;
+      const watermarkedContent = await addWatermark(fileContent, watermarkContent, {
+        fontSize: 8,
+        opacity: 0.15,
+        angle: -45,
+        color: { r: 0.5, g: 0.5, b: 0.5 }
+      });
 
       // Upload watermarked version
       console.log("📤 Uploading watermarked version...");
