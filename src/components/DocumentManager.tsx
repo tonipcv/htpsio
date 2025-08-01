@@ -7,7 +7,7 @@ import { Card } from "./ui/card";
 import { Input } from "./ui/input";
 import { toast } from "./ui/use-toast";
 import { PDFPreviewModal } from "./ui/pdf-preview-modal";
-import { Eye, Users, Share2, UserPlus } from "lucide-react";
+import { Eye, Users, Share2, UserPlus, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import {
   DropdownMenu,
@@ -214,6 +214,38 @@ export function DocumentManager() {
     }
   };
 
+  // Deletar documento
+  const handleDeleteDocument = async (documentId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este documento?")) {
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/documents/${documentId}`, {
+        method: "DELETE",
+      });
+      
+      if (!response.ok) throw new Error("Falha ao excluir documento");
+      
+      // Remove o documento da lista
+      setDocuments(documents.filter(doc => doc.id !== documentId));
+      
+      toast({
+        title: "Sucesso",
+        description: "Documento excluído com sucesso",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o documento",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Visualizar documento
   const handlePreview = (document: Document) => {
     console.log("🔍 Iniciando preview do documento:", document.name);
@@ -231,16 +263,16 @@ export function DocumentManager() {
       {/* Controls for upload and management - admin only */}
       {isAdmin && (
         <div className="flex items-center gap-2">
-          <div className="relative flex-1 max-w-xs">
+          <div className="relative flex-1 max-w-sm">
             <Input
               type="file"
               accept=".pdf"
               onChange={handleUpload}
               disabled={isUploading}
-              className="h-8 text-xs bg-[#f5f5f7]/5 border-[#f5f5f7]/10 text-[#f5f5f7] cursor-pointer file:cursor-pointer file:bg-[#f5f5f7]/10 file:text-[#f5f5f7] file:border-0 file:h-8 file:mr-2 file:px-3 file:text-xs hover:file:bg-[#f5f5f7]/20"
+              className="h-8 text-xs bg-transparent border-0 text-[#f5f5f7] cursor-pointer file:cursor-pointer file:bg-[#f5f5f7]/10 file:text-[#f5f5f7] file:border-0 file:h-8 file:mr-2 file:px-3 file:text-xs hover:file:bg-[#f5f5f7]/20 file:rounded-md w-full p-0 rounded-none"
             />
             {isUploading && (
-              <div className="absolute inset-0 bg-[#1c1d20]/50 flex items-center justify-center">
+              <div className="absolute inset-0 bg-[#1c1d20]/50 flex items-center justify-center pointer-events-none">
                 <div className="inline-block h-4 w-4 animate-spin rounded-full border border-[#f5f5f7] border-t-transparent"></div>
               </div>
             )}
@@ -350,29 +382,41 @@ export function DocumentManager() {
                   </Button>
                   
                   {isAdmin && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#f5f5f7]/5"
-                        >
-                          <Share2 className="h-3 w-3 mr-1" />
-                          Share
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 bg-[#1c1d20] border-[#f5f5f7]/10">
-                        {clients.map((client) => (
-                          <DropdownMenuItem
-                            key={client.id}
-                            onClick={() => handleShareDocument(doc.id, client.id)}
-                            className="text-xs text-[#f5f5f7]/70 hover:text-[#f5f5f7] focus:text-[#f5f5f7] focus:bg-[#f5f5f7]/5"
+                    <>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#f5f5f7]/5"
                           >
-                            {client.name}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                            <Share2 className="h-3 w-3 mr-1" />
+                            Share
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 bg-[#1c1d20] border-[#f5f5f7]/10">
+                          {clients.map((client) => (
+                            <DropdownMenuItem
+                              key={client.id}
+                              onClick={() => handleShareDocument(doc.id, client.id)}
+                              className="text-xs text-[#f5f5f7]/70 hover:text-[#f5f5f7] focus:text-[#f5f5f7] focus:bg-[#f5f5f7]/5"
+                            >
+                              {client.name}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteDocument(doc.id)}
+                        className="h-7 px-2 text-xs text-[#f5f5f7]/70 hover:text-red-500 hover:bg-[#f5f5f7]/5"
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Delete
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>

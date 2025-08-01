@@ -3,10 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest) {
+  // Extract the ID from the URL
+  const id = request.nextUrl.pathname.split('/').pop();
   try {
     const session = await getServerSession(authOptions);
 
@@ -25,7 +24,7 @@ export async function DELETE(
 
     // Get the client to verify ownership
     const client = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { adminId: true }
     });
 
@@ -40,7 +39,7 @@ export async function DELETE(
 
     // Delete the client
     await prisma.user.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     return new NextResponse(null, { status: 204 });

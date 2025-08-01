@@ -31,7 +31,6 @@ export async function POST(req: Request) {
     const user = await prisma.user.findFirst({
       where: {
         email,
-        emailVerified: null
       }
     });
 

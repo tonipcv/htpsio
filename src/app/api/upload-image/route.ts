@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { nanoid } from 'nanoid';
-import { minioClient, BUCKET_NAME } from '@/lib/minio';
+import { getMinioClient } from '@/lib/minio';
+
+const BUCKET_NAME = "futurostech";
 
 export async function POST(req: Request) {
   try {
@@ -31,7 +33,8 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(await file.arrayBuffer());
 
     try {
-      // Upload to MinIO
+      // Get MinIO client and upload
+      const minioClient = getMinioClient();
       await minioClient.putObject(
         BUCKET_NAME,
         filename,

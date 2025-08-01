@@ -13,8 +13,9 @@ let currentToken: AcronisToken | null = null;
 export async function getAcronisToken(): Promise<string> {
   // Check if we have a valid token
   const now = Date.now();
-  if (currentToken?.access_token && 
-      currentToken?.expires_in && 
+  if (currentToken && 
+      currentToken.access_token && 
+      currentToken.expires_in && 
       (now - currentToken.issued_at) / 1000 < currentToken.expires_in - 300) {
     return currentToken.access_token;
   }
@@ -42,6 +43,10 @@ export async function getAcronisToken(): Promise<string> {
       ...data,
       issued_at: Date.now(),
     };
+
+    if (!currentToken) {
+      throw new Error('Failed to refresh Acronis token');
+    }
 
     return currentToken.access_token;
   } catch (error) {

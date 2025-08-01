@@ -1,5 +1,5 @@
 import { signOut } from "next-auth/react";
-import Link from "next/link";
+import { User } from "next-auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,63 +9,66 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserCircleIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline";
-import { User } from "next-auth";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface UserDropdownProps {
-  user: User | null | undefined;
+  user?: User;
+  compact?: boolean;
 }
 
-export function UserDropdown({ user }: UserDropdownProps) {
+export function UserDropdown({ user, compact = false }: UserDropdownProps) {
   if (!user) return null;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="flex items-center gap-2 cursor-pointer hover:bg-[#f5f5f7]/5 p-2 rounded-lg transition-all duration-200">
-          <Avatar className="h-9 w-9">
-            <AvatarImage src={user?.image || undefined} />
-            <AvatarFallback>
-              {user?.name?.charAt(0).toUpperCase()}
+        <Button
+          variant="ghost"
+          className={cn(
+            "relative flex items-center transition-all duration-200 gap-2",
+            compact ? "h-10 w-10 p-0" : "h-9 px-2",
+            "hover:bg-[#f5f5f7]/5 hover:text-[#f5f5f7]"
+          )}
+        >
+          <Avatar className={cn(
+            "border border-[#f5f5f7]/10",
+            compact ? "h-7 w-7" : "h-6 w-6"
+          )}>
+            <AvatarImage src={user.image || undefined} />
+            <AvatarFallback className="bg-[#f5f5f7]/5 text-[#f5f5f7]/70">
+              {user.name?.charAt(0) || user.email?.charAt(0)}
             </AvatarFallback>
           </Avatar>
-          <div className="truncate">
-            <p className="text-sm font-medium text-[#f5f5f7] truncate">
-              {user?.name}
-            </p>
-            <p className="text-xs text-[#f5f5f7]/70 truncate">
-              {user?.email}
-            </p>
+          {!compact && (
+            <>
+              <div className="flex flex-col items-start">
+                <span className="text-sm font-medium text-[#f5f5f7] leading-none">
+                  {user.name}
+                </span>
+                <span className="text-xs text-[#f5f5f7]/50 leading-none mt-1">
+                  {user.email}
+                </span>
           </div>
-        </div>
+              <ChevronDown className="h-4 w-4 text-[#f5f5f7]/50" />
+            </>
+          )}
+        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 bg-zinc-900 border-zinc-800 text-zinc-300" align="end">
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium text-zinc-300">{user?.name}</p>
-            <p className="text-xs text-zinc-500 truncate">{user?.email}</p>
-          </div>
+      <DropdownMenuContent
+        align="end"
+        className="w-56 bg-[#1c1d20] border-[#f5f5f7]/10"
+      >
+        <DropdownMenuLabel className="text-xs text-[#f5f5f7]/50">
+          {user.email}
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-zinc-800" />
-        <Link href="/profile">
-          <DropdownMenuItem className="cursor-pointer hover:bg-zinc-800 focus:bg-zinc-800">
-            <UserCircleIcon className="h-4 w-4 mr-2" />
-            Perfil
-          </DropdownMenuItem>
-        </Link>
-        <Link href="/settings">
-          <DropdownMenuItem className="cursor-pointer hover:bg-zinc-800 focus:bg-zinc-800">
-            <Cog6ToothIcon className="h-4 w-4 mr-2" />
-            Configurações
-          </DropdownMenuItem>
-        </Link>
-        <DropdownMenuSeparator className="bg-zinc-800" />
+        <DropdownMenuSeparator className="bg-[#f5f5f7]/10" />
         <DropdownMenuItem 
-          className="cursor-pointer text-red-400 hover:text-red-400 hover:bg-red-400/10 focus:bg-red-400/10"
-          onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+          onClick={() => signOut()}
+          className="text-xs text-[#f5f5f7]/70 hover:text-[#f5f5f7] focus:text-[#f5f5f7] focus:bg-[#f5f5f7]/5"
         >
-          <ArrowRightOnRectangleIcon className="h-4 w-4 mr-2" />
-          Sair
+          Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -52,41 +52,8 @@ export const authOptions: AuthOptions = {
         }
 
         if (credentials.type === 'patient') {
-          const patient = await prisma.patient.findFirst({
-            where: { email: credentials.email },
-            include: {
-              user: {
-                select: {
-                  slug: true,
-                  plan: true,
-                  isPremium: true
-                }
-              }
-            }
-          });
-
-          if (!patient) {
-            throw new Error('Invalid email or password');
-          }
-
-          if (!patient.hasPassword || !patient.password) {
-            throw new Error('Password not set for this account');
-          }
-
-          const passwordValid = await compare(credentials.password, patient.password);
-          if (!passwordValid) {
-            throw new Error('Invalid email or password');
-          }
-
-          return {
-            id: patient.id,
-            email: patient.email,
-            name: patient.name,
-            type: 'patient' as const,
-            userSlug: patient.user?.slug,
-            plan: patient.user?.plan || undefined,
-            isPremium: patient.user?.isPremium || false
-          };
+          // Patient authentication is no longer supported due to missing model.
+          return null;
         }
 
         const user = await prisma.user.findUnique({

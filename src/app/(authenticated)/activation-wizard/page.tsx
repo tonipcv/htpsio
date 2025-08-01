@@ -51,14 +51,12 @@ const STEPS: Record<WizardStep, StepInfo> = {
 
 const STEP_ORDER: WizardStep[] = ['DOWNLOAD_INSTALLER', 'INSTALL_DEVICE', 'VERIFY_EMAIL', 'COMPLETED'];
 
-export default function ActivationWizard() {
+function ActivationWizard() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<WizardStep>('DOWNLOAD_INSTALLER');
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    // TODO: Fetch current step from API
-    // For now using mock data
     setCurrentStep('DOWNLOAD_INSTALLER');
   }, []);
 
@@ -70,32 +68,26 @@ export default function ActivationWizard() {
   const handleAction = async (step: WizardStep) => {
     switch (step) {
       case 'DOWNLOAD_INSTALLER':
-        // TODO: Trigger installer download
-        // For now just moving to next step
         setCurrentStep('INSTALL_DEVICE');
         break;
-
       case 'INSTALL_DEVICE':
-        // TODO: Show installation instructions modal
         setCurrentStep('VERIFY_EMAIL');
         break;
-
       case 'VERIFY_EMAIL':
-        // TODO: Handle email verification
         setCurrentStep('COMPLETED');
         break;
-
       case 'COMPLETED':
         router.push('/protection-dashboard');
         break;
     }
   };
 
+  const CurrentStepIcon = STEPS[currentStep].icon;
+
   return (
     <div className="min-h-[100dvh] bg-black pt-20 pb-24 md:pt-12 md:pb-16">
       <div className="container mx-auto px-4 max-w-3xl">
         <div className="flex flex-col gap-8">
-          {/* Header */}
           <div className="text-center">
             <h1 className="text-2xl font-bold text-white mb-2">
               Configuração Inicial
@@ -105,7 +97,6 @@ export default function ActivationWizard() {
             </p>
           </div>
 
-          {/* Progress */}
           <div className="space-y-2">
             <Progress value={progress} className="h-2" />
             <div className="flex justify-between text-xs text-zinc-500">
@@ -114,11 +105,10 @@ export default function ActivationWizard() {
             </div>
           </div>
 
-          {/* Current Step Card */}
           <Card className="bg-zinc-900/50 border-zinc-800">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-white">
-                <STEPS[currentStep].icon className="h-6 w-6 text-blue-500" />
+                <CurrentStepIcon className="h-6 w-6 text-blue-500" />
                 {STEPS[currentStep].title}
               </CardTitle>
             </CardHeader>
@@ -136,12 +126,12 @@ export default function ActivationWizard() {
             </CardContent>
           </Card>
 
-          {/* Step List */}
           <div className="space-y-4">
             {STEP_ORDER.map((step, index) => {
               const currentIndex = STEP_ORDER.indexOf(currentStep);
               const isCompleted = index < currentIndex;
               const isCurrent = step === currentStep;
+              const StepIcon = STEPS[step].icon;
 
               return (
                 <div
@@ -178,4 +168,6 @@ export default function ActivationWizard() {
       </div>
     </div>
   );
-} 
+}
+
+export default ActivationWizard; 

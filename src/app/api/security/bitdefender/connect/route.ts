@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { BITDEFENDER_API_CONFIG } from '../config';
+import { BITDEFENDER_CONFIG } from '../config';
 
 export async function POST(request: Request) {
   try {
@@ -13,11 +13,18 @@ export async function POST(request: Request) {
     }
 
     // Validate API key by making a test request to BitDefender API
-    const response = await fetch(`${BITDEFENDER_API_CONFIG.BASE_URL}/${BITDEFENDER_API_CONFIG.VERSION}${BITDEFENDER_API_CONFIG.ENDPOINTS.COMPANIES}`, {
+    const response = await fetch(`${BITDEFENDER_CONFIG.BASE_URL}/api/v1.0/jsonrpc/network`, {
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': BITDEFENDER_CONFIG.getAuthHeader(),
         'Content-Type': 'application/json',
       },
+      method: 'POST',
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'getAccountsList',
+        params: {},
+        id: crypto.randomUUID()
+      })
     });
 
     if (!response.ok) {

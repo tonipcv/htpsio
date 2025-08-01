@@ -1,23 +1,20 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background -->
-  <rect width="512" height="512" rx="96" fill="#0070df"/>
-  
-  <!-- Medical Cross with shadow effect -->
-  <g filter="url(#shadow)">
-    <path d="M224 128H288V384H224V128ZM128 224H384V288H128V224Z" fill="white"/>
-  </g>
-  
-  <!-- Shadow filter -->
-  <defs>
-    <filter id="shadow" x="0" y="0" width="512" height="512" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
-      <feOffset dy="4"/>
-      <feGaussianBlur stdDeviation="8"/>
-      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
-      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
-      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
-    </filter>
-  </defs>
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+ "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+ width="320.000000pt" height="320.000000pt" viewBox="0 0 320.000000 320.000000"
+ preserveAspectRatio="xMidYMid meet">
+
+<g transform="translate(0.000000,320.000000) scale(0.100000,-0.100000)"
+fill="#000000" stroke="none">
+<path d="M1440 2535 l-155 -155 -217 0 -218 0 0 -218 0 -217 -160 -160 c-88
+-88 -160 -164 -160 -169 0 -5 72 -82 160 -171 l160 -161 0 -212 0 -212 217 0
+218 0 160 -160 161 -161 157 161 157 160 215 0 215 0 0 215 0 215 162 165 162
+166 -162 162 -162 162 0 218 0 217 -218 0 -217 0 -155 155 c-85 85 -157 155
+-160 155 -3 0 -75 -70 -160 -155z m300 -130 l135 -135 182 0 183 0 0 -182 0
+-183 142 -142 143 -143 -143 -143 -142 -142 0 -183 0 -182 -181 0 -181 0 -139
+-142 -139 -143 -140 142 -140 143 -180 0 -180 0 0 177 0 176 -140 143 c-77 79
+-140 147 -140 151 0 5 63 71 140 148 l140 140 0 182 0 183 183 0 182 0 135
+135 c74 74 137 135 140 135 3 0 66 -61 140 -135z"/>
+</g>
 </svg>

@@ -38,7 +38,7 @@ export default function AuthenticatedLayout({
   return (
     <div className="min-h-screen h-full bg-[#1c1d20]">
       <Navigation />
-      <main className="h-full min-h-[100dvh] lg:pl-52 pt-14 lg:pt-0">
+      <main className="h-full min-h-[100dvh] lg:pl-14 pt-14 lg:pt-0">
         {children}
       </main>
     </div>

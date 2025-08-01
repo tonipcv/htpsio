@@ -32,7 +32,7 @@ export async function GET() {
     let activationStatus = await prisma.activationStatus.findFirst({
       where: {
         tenant: {
-          owner: { id: session.user.id }
+          users: { some: { id: session.user.id } }
         }
       }
     });
@@ -41,7 +41,7 @@ export async function GET() {
     const installer = await prisma.installer.findFirst({
       where: {
         tenant: {
-          owner: { id: session.user.id }
+          users: { some: { id: session.user.id } }
         }
       }
     });
@@ -110,10 +110,8 @@ export async function POST(req: Request) {
       localTenant = await prisma.tenant.create({
         data: {
           name: session.user.name || 'Empresa',
-          domain: `${session.user.id}.local`,
-          ownerId: session.user.id,
-          bitdefenderId: 'temp-bitdefender-id',
-          acronisId: user.acronisTenantId
+          slug: `${session.user.id}-local`,
+          users: { connect: { id: session.user.id } },
         }
       });
     }

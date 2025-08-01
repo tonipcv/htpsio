@@ -127,7 +127,7 @@ export async function GET() {
     const activationStatus = await prisma.activationStatus.findFirst({
       where: {
         tenant: {
-          owner: { id: session.user.id }
+          users: { some: { id: session.user.id } }
         }
       }
     });
