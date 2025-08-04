@@ -1,0 +1,30 @@
+/*
+  Warnings:
+
+  - You are about to drop the `DocumentPage` table. If the table is not empty, all the data it contains will be lost.
+
+*/
+-- DropForeignKey
+ALTER TABLE "DocumentPage" DROP CONSTRAINT "DocumentPage_documentId_fkey";
+
+-- AlterTable
+ALTER TABLE "users" ADD COLUMN     "emailVerified" TIMESTAMP(3);
+
+-- DropTable
+DROP TABLE "DocumentPage";
+
+-- CreateTable
+CREATE TABLE "VerificationToken" (
+    "id" TEXT NOT NULL,
+    "identifier" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "expires" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "VerificationToken_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "VerificationToken_token_key" ON "VerificationToken"("token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "VerificationToken_identifier_token_key" ON "VerificationToken"("identifier", "token");

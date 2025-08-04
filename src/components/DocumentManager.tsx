@@ -7,7 +7,7 @@ import { Card } from "./ui/card";
 import { Input } from "./ui/input";
 import { toast } from "./ui/use-toast";
 import { PDFPreviewModal } from "./ui/pdf-preview-modal";
-import { Eye, Users, Share2, UserPlus, Trash2 } from "lucide-react";
+import { Eye, Users, Share2, UserPlus, Trash2, Edit2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import {
   DropdownMenu,
@@ -42,6 +42,15 @@ interface Client {
   };
 }
 
+// Função para formatar o tamanho do arquivo
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
 export function DocumentManager() {
   const { data: session } = useSession();
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -51,7 +60,11 @@ export function DocumentManager() {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [newClient, setNewClient] = useState({ name: "", email: "", password: "" });
+  const [documentToRename, setDocumentToRename] = useState<Document | null>(null);
+  const [newDocumentName, setNewDocumentName] = useState("");
+  const [totalStorage, setTotalStorage] = useState<number>(0);
 
   const isAdmin = session?.user?.role === "admin";
 
@@ -95,10 +108,16 @@ export function DocumentManager() {
   // Carregar dados ao montar o componente
   useEffect(() => {
     loadDocuments();
-    if (isAdmin) {
-      loadClients();
+    loadClients();
+  }, []);
+  
+  // Calcular o total de armazenamento quando os documentos são carregados
+  useEffect(() => {
+    if (documents.length > 0) {
+      const total = documents.reduce((sum, doc) => sum + doc.size, 0);
+      setTotalStorage(total);
     }
-  }, [isAdmin]);
+  }, [documents]);
 
   // Upload de documento
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -246,6 +265,54 @@ export function DocumentManager() {
     }
   };
 
+  // Renomear documento
+  const handleRenameDocument = async () => {
+    if (!documentToRename) return;
+    
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/documents/${documentToRename.id}/rename`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newDocumentName }),
+      });
+      
+      if (!response.ok) throw new Error("Falha ao renomear documento");
+      
+      const updatedDocument = await response.json();
+      
+      // Atualiza o documento na lista
+      setDocuments(documents.map(doc => 
+        doc.id === updatedDocument.id ? updatedDocument : doc
+      ));
+      
+      toast({
+        title: "Sucesso",
+        description: "Documento renomeado com sucesso",
+      });
+      
+      // Fecha o modal e limpa os estados
+      setIsRenameModalOpen(false);
+      setDocumentToRename(null);
+      setNewDocumentName("");
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível renomear o documento",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Abrir modal de renomeação
+  const openRenameModal = (document: Document) => {
+    setDocumentToRename(document);
+    setNewDocumentName(document.name);
+    setIsRenameModalOpen(true);
+  };
+
   // Visualizar documento
   const handlePreview = (document: Document) => {
     console.log("🔍 Iniciando preview do documento:", document.name);
@@ -336,91 +403,119 @@ export function DocumentManager() {
           </div>
         ) : (
           <div className="divide-y divide-[#f5f5f7]/[0.03]">
-            {documents.map((doc) => (
-              <div key={doc.id} className="flex items-center justify-between p-3 group hover:bg-[#f5f5f7]/[0.02]">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-sm text-[#f5f5f7] truncate">{doc.name}</span>
-                    <span className="text-xs text-[#f5f5f7]/50">
-                      {new Date(doc.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  {doc.documentAccess && doc.documentAccess.length > 0 && (
-                    <div className="flex -space-x-2 mr-2">
-                      {doc.documentAccess.slice(0, 3).map((access) => (
-                        <div
-                          key={access.client.id}
-                          className="h-5 w-5 rounded-full bg-[#f5f5f7]/10 border border-[#1c1d20] flex items-center justify-center"
-                          title={access.client.name}
-                        >
-                          <span className="text-[10px] text-[#f5f5f7]/70">
-                            {access.client.name.charAt(0)}
-                          </span>
-                        </div>
-                      ))}
-                      {doc.documentAccess.length > 3 && (
-                        <div className="h-5 w-5 rounded-full bg-[#f5f5f7]/10 border border-[#1c1d20] flex items-center justify-center">
-                          <span className="text-[10px] text-[#f5f5f7]/70">
-                            +{doc.documentAccess.length - 3}
-                          </span>
-                        </div>
-                      )}
+            <div className="p-4">
+              <div className="flex justify-between items-center">
+                {isAdmin && totalStorage > 0 && (
+                  <p className="text-[10px] text-[#f5f5f7]/40">Storage: {formatFileSize(totalStorage)}</p>
+                )}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              {documents.map((doc) => (
+                <div key={doc.id} className="flex items-center justify-between p-3 group hover:bg-[#f5f5f7]/[0.02]">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-[#f5f5f7] truncate">{doc.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-[#f5f5f7]/50">
+                          {new Date(doc.createdAt).toLocaleDateString()}
+                        </p>
+                        {isAdmin && (
+                          <p className="text-[10px] text-[#f5f5f7]/40">
+                            · {formatFileSize(doc.size)}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  )}
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handlePreview(doc)}
-                    className="h-7 px-2 text-xs text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#f5f5f7]/5"
-                  >
-                    <Eye className="h-3 w-3 mr-1" />
-                    View
-                  </Button>
-                  
-                  {isAdmin && (
-                    <>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#f5f5f7]/5"
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {doc.documentAccess && doc.documentAccess.length > 0 && (
+                      <div className="flex -space-x-2 mr-2">
+                        {doc.documentAccess.slice(0, 3).map((access) => (
+                          <div
+                            key={access.client.id}
+                            className="h-5 w-5 rounded-full bg-[#f5f5f7]/10 border border-[#1c1d20] flex items-center justify-center"
+                            title={access.client.name}
                           >
-                            <Share2 className="h-3 w-3 mr-1" />
-                            Share
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 bg-[#1c1d20] border-[#f5f5f7]/10">
-                          {clients.map((client) => (
-                            <DropdownMenuItem
-                              key={client.id}
-                              onClick={() => handleShareDocument(doc.id, client.id)}
-                              className="text-xs text-[#f5f5f7]/70 hover:text-[#f5f5f7] focus:text-[#f5f5f7] focus:bg-[#f5f5f7]/5"
-                            >
-                              {client.name}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      
+                            <span className="text-[10px] text-[#f5f5f7]/70">
+                              {access.client.name.charAt(0)}
+                            </span>
+                          </div>
+                        ))}
+                        {doc.documentAccess.length > 3 && (
+                          <div className="h-5 w-5 rounded-full bg-[#f5f5f7]/10 border border-[#1c1d20] flex items-center justify-center">
+                            <span className="text-[10px] text-[#f5f5f7]/70">
+                              +{doc.documentAccess.length - 3}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handlePreview(doc)}
+                      className="h-7 px-2 text-xs text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#f5f5f7]/5"
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      View
+                    </Button>
+                    
+                    {isAdmin && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDeleteDocument(doc.id)}
-                        className="h-7 px-2 text-xs text-[#f5f5f7]/70 hover:text-red-500 hover:bg-[#f5f5f7]/5"
+                        onClick={() => openRenameModal(doc)}
+                        className="h-7 w-7 p-0 text-xs text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#f5f5f7]/5 flex items-center justify-center"
+                        title="Rename document"
                       >
-                        <Trash2 className="h-3 w-3 mr-1" />
-                        Delete
+                        <Edit2 className="h-3 w-3" />
                       </Button>
-                    </>
-                  )}
+                    )}
+                    
+                    {isAdmin && (
+                      <>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#f5f5f7]/5"
+                            >
+                              <Share2 className="h-3 w-3 mr-1" />
+                              Share
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48 bg-[#1c1d20] border-[#f5f5f7]/10">
+                            {clients.map((client) => (
+                              <DropdownMenuItem
+                                key={client.id}
+                                onClick={() => handleShareDocument(doc.id, client.id)}
+                                className="text-xs text-[#f5f5f7]/70 hover:text-[#f5f5f7] focus:text-[#f5f5f7] focus:bg-[#f5f5f7]/5"
+                              >
+                                {client.name}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteDocument(doc.id)}
+                          className="h-7 px-2 text-xs text-[#f5f5f7]/70 hover:text-red-500 hover:bg-[#f5f5f7]/5"
+                        >
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          Delete
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
             
             {documents.length === 0 && (
               <div className="p-8 text-center">
@@ -440,6 +535,36 @@ export function DocumentManager() {
           documentName={selectedDocument.name}
         />
       )}
+      
+      {/* Rename Document Modal */}
+      <Dialog open={isRenameModalOpen} onOpenChange={setIsRenameModalOpen}>
+        <DialogContent className="bg-[#1c1d20] border-[#f5f5f7]/10">
+          <DialogHeader>
+            <DialogTitle className="text-[#f5f5f7] text-sm">Rename Document</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-3">
+            <div className="space-y-2">
+              <Input
+                value={newDocumentName}
+                onChange={(e) => setNewDocumentName(e.target.value)}
+                placeholder="Document name"
+                className="h-8 text-xs bg-[#f5f5f7]/5 border-[#f5f5f7]/10 text-[#f5f5f7]"
+              />
+            </div>
+            <Button 
+              onClick={handleRenameDocument}
+              disabled={isLoading}
+              className="w-full h-8 mt-2 bg-[#f5f5f7]/10 hover:bg-[#f5f5f7]/20 text-[#f5f5f7] text-xs"
+            >
+              {isLoading ? (
+                <div className="inline-block h-4 w-4 animate-spin rounded-full border border-[#f5f5f7] border-t-transparent"></div>
+              ) : (
+                "Rename Document"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

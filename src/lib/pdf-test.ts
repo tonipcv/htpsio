@@ -7,10 +7,11 @@ export function isPDFCorrupted(buffer: Buffer): boolean {
       return true;
     }
 
-    // Verificar se o arquivo termina com %%EOF
-    const pdfFooter = buffer.slice(-6).toString().trim();
-    if (!pdfFooter.includes('%%EOF')) {
-      console.log("❌ PDF footer missing or incorrect:", pdfFooter);
+    // Verificar se o arquivo termina com %EOF (mais flexível)
+    // Examina os últimos 20 bytes para encontrar qualquer variação do marcador EOF
+    const lastBytes = buffer.slice(-20).toString().trim();
+    if (!lastBytes.includes('%EOF')) {
+      console.log("❌ PDF footer missing or incorrect:", lastBytes);
       return true;
     }
 

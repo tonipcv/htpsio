@@ -42,7 +42,7 @@ export default function Home() {
             className="h-12 w-12 brightness-0 invert mx-auto"
           />
           <p className="text-[#f5f5f7]/70 text-sm font-light tracking-wide">
-            Your complete ecosystem for Cyber Security
+            Your complete ecosystem for Data Protection
           </p>
         </div>
 

@@ -13,7 +13,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'HTSP.io',
+  title: 'Xase',
   description: 'Enterprise Security Platform',
   manifest: '/manifest.json',
   icons: {
