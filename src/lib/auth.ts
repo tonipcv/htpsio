@@ -44,9 +44,29 @@ export const authOptions: AuthOptions = {
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Senha', type: 'password' },
+        token: { label: 'Token', type: 'text' }, // Para login por código
         type: { label: 'Tipo', type: 'text' }
       },
       async authorize(credentials) {
+        // Se temos um token JWT (login por código), verificar e retornar usuário
+        if (credentials?.token) {
+          try {
+            if (!process.env.NEXTAUTH_SECRET) {
+              throw new Error('Missing NEXTAUTH_SECRET');
+            }
+            
+            // Verificar e decodificar o token
+            const decoded = jwt.verify(credentials.token, process.env.NEXTAUTH_SECRET);
+            
+            // Retornar os dados do usuário contidos no token
+            return decoded as any;
+          } catch (error) {
+            console.error('Token verification error:', error);
+            throw new Error('Invalid or expired token');
+          }
+        }
+        
+        // Login tradicional com senha
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Email and password are required');
         }
@@ -158,12 +178,28 @@ export async function createAuthToken(payload: AuthTokenPayload): Promise<string
 /**
  * Gera um token de acesso temporário para o paciente
  */
-export async function generatePatientAccessToken() {
-  // Gerar token aleatório
+export function generatePatientAccessToken() {
   const token = crypto.randomBytes(32).toString('hex');
-  
-  // Hash do token para armazenar no banco
-  const hashedToken = await hash(token, 10);
+  return token;
+}
 
-  return { token, hashedToken };
-} 
+// Função para assinar token JWT para login por código
+export async function signJwtToken(user: {
+  id: string;
+  email: string;
+  name: string;
+  type: 'user' | 'patient';
+  role?: string;
+  userSlug?: string;
+  image?: string | null;
+  plan?: string;
+  isPremium?: boolean;
+}) {
+  if (!process.env.NEXTAUTH_SECRET) {
+    throw new Error('Missing NEXTAUTH_SECRET');
+  }
+  
+  return jwt.sign(user, process.env.NEXTAUTH_SECRET, {
+    expiresIn: '30d'
+  });
+}

@@ -30,6 +30,7 @@ model User {
   tenant          Tenant?       @relation(fields: [tenantId], references: [id])
   documents       Document[]
   documentDownloads DocumentDownload[]
+  verificationCode VerificationCode?
   
   // Relacionamentos para o sistema de clientes
   clients         User[]        @relation("AdminClient")
@@ -240,4 +241,15 @@ model VerificationToken {
   expires    DateTime
   
   @@unique([identifier, token])
+}
+
+model VerificationCode {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

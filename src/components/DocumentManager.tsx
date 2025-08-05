@@ -7,8 +7,10 @@ import { Card } from "./ui/card";
 import { Input } from "./ui/input";
 import { toast } from "./ui/use-toast";
 import { PDFPreviewModal } from "./ui/pdf-preview-modal";
-import { Eye, Users, Share2, UserPlus, Trash2, Edit2 } from "lucide-react";
+import { Eye, Users, Share2, UserPlus, Trash2, Edit2, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Checkbox } from "./ui/checkbox";
+import { Label } from "./ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +63,10 @@ export function DocumentManager() {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [documentToShare, setDocumentToShare] = useState<Document | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [sendEmail, setSendEmail] = useState(false);
   const [newClient, setNewClient] = useState({ name: "", email: "", password: "" });
   const [documentToRename, setDocumentToRename] = useState<Document | null>(null);
   const [newDocumentName, setNewDocumentName] = useState("");
@@ -189,29 +195,44 @@ export function DocumentManager() {
   };
 
   // Compartilhar documento
-  const handleShareDocument = async (documentId: string, clientId: string) => {
+  const handleShareDocument = async (documentId: string, clientId: string, sendNotification: boolean = false) => {
     try {
       const response = await fetch(`/api/documents/${documentId}/share`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId }),
+        body: JSON.stringify({ clientId, sendNotification }),
       });
 
-      if (!response.ok) throw new Error("Falha ao compartilhar documento");
+      if (!response.ok) throw new Error("Failed to share document");
 
       toast({
-        title: "Sucesso",
-        description: "Documento compartilhado com sucesso",
+        title: "Success",
+        description: sendNotification 
+          ? "Document shared successfully and notification email sent" 
+          : "Document shared successfully",
       });
 
+      // Reset state
+      setIsShareModalOpen(false);
+      setDocumentToShare(null);
+      setSelectedClientId("");
+      setSendEmail(false);
+      
+      // Reload documents
       loadDocuments();
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Não foi possível compartilhar o documento",
+        title: "Error",
+        description: "Could not share the document",
         variant: "destructive",
       });
     }
+  };
+  
+  // Abrir modal de compartilhamento
+  const openShareModal = (document: Document) => {
+    setDocumentToShare(document);
+    setIsShareModalOpen(true);
   };
 
   // Download de documento
@@ -477,29 +498,15 @@ export function DocumentManager() {
                     
                     {isAdmin && (
                       <>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 px-2 text-xs text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#f5f5f7]/5"
-                            >
-                              <Share2 className="h-3 w-3 mr-1" />
-                              Share
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48 bg-[#1c1d20] border-[#f5f5f7]/10">
-                            {clients.map((client) => (
-                              <DropdownMenuItem
-                                key={client.id}
-                                onClick={() => handleShareDocument(doc.id, client.id)}
-                                className="text-xs text-[#f5f5f7]/70 hover:text-[#f5f5f7] focus:text-[#f5f5f7] focus:bg-[#f5f5f7]/5"
-                              >
-                                {client.name}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openShareModal(doc)}
+                          className="h-7 px-2 text-xs text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#f5f5f7]/5"
+                        >
+                          <Share2 className="h-3 w-3 mr-1" />
+                          Share
+                        </Button>
                         
                         <Button
                           variant="ghost"
@@ -562,6 +569,83 @@ export function DocumentManager() {
                 "Rename Document"
               )}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Document Modal */}
+      <Dialog open={isShareModalOpen} onOpenChange={setIsShareModalOpen}>
+        <DialogContent className="bg-[#1c1d20] border-[#f5f5f7]/10">
+          <DialogHeader>
+            <DialogTitle className="text-[#f5f5f7] text-sm">Share Document</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-3">
+            <p className="text-xs text-[#f5f5f7]/70">
+              Select a member to share "{documentToShare?.name}" with:
+            </p>
+            
+            {clients.length > 0 ? (
+              <div className="max-h-48 overflow-y-auto space-y-2 pr-2">
+                {clients.map((client) => (
+                  <div 
+                    key={client.id} 
+                    className={`p-2 rounded-md cursor-pointer transition-colors ${selectedClientId === client.id ? 'bg-[#f5f5f7]/20' : 'bg-[#f5f5f7]/5 hover:bg-[#f5f5f7]/10'}`}
+                    onClick={() => setSelectedClientId(client.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-[#f5f5f7]">{client.name}</p>
+                        <p className="text-xs text-[#f5f5f7]/50">{client.email}</p>
+                      </div>
+                      {selectedClientId === client.id && (
+                        <div className="h-2 w-2 rounded-full bg-[#f5f5f7]"></div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-sm text-[#f5f5f7]/40">No members available</p>
+              </div>
+            )}
+            
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox 
+                id="send-email" 
+                checked={sendEmail}
+                onCheckedChange={(checked) => setSendEmail(checked === true)}
+                className="border-[#f5f5f7]/30 data-[state=checked]:bg-[#f5f5f7]/70 data-[state=checked]:text-[#1c1d20]"
+              />
+              <Label htmlFor="send-email" className="text-xs text-[#f5f5f7]/70 cursor-pointer">
+                Send email notification
+              </Label>
+            </div>
+            
+            <div className="flex justify-end gap-2 pt-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsShareModalOpen(false)}
+                className="h-8 text-xs border-[#f5f5f7]/10 text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#f5f5f7]/5"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (documentToShare && selectedClientId) {
+                    handleShareDocument(documentToShare.id, selectedClientId, sendEmail);
+                  }
+                }}
+                disabled={!selectedClientId || isLoading}
+                className="h-8 text-xs bg-[#f5f5f7]/10 hover:bg-[#f5f5f7]/20 text-[#f5f5f7]"
+              >
+                {isLoading ? (
+                  <div className="inline-block h-4 w-4 animate-spin rounded-full border border-[#f5f5f7] border-t-transparent"></div>
+                ) : (
+                  "Share Document"
+                )}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

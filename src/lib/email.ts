@@ -4,7 +4,7 @@ if (!process.env.SMTP_HOST || !process.env.SMTP_PORT || !process.env.SMTP_USER |
   throw new Error('Missing SMTP configuration environment variables');
 }
 
-const transporter = createTransport({
+export const transporter = createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT),
   secure: false, // Port 2525 is not secure by default
@@ -103,33 +103,77 @@ interface SendPasswordResetEmailProps {
 }
 
 export async function sendPasswordResetEmail({ to, name, resetLink }: SendPasswordResetEmailProps) {
-  try {
-    await transporter.sendMail({
-      from: {
-        name: 'MED1',
-        address: process.env.SMTP_FROM as string
-      },
-      to,
-      subject: 'Recuperação de senha - MED1',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #1a365d;">Olá, ${name}!</h2>
-          <p>Recebemos uma solicitação para redefinir sua senha no MED1.</p>
-          <p>Clique no botão abaixo para criar uma nova senha:</p>
-          <div style="margin: 20px 0;">
-            <a href="${resetLink}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-              Redefinir senha
-            </a>
-          </div>
-          <p>Se você não solicitou esta alteração, ignore este email.</p>
-          <p>Este link expira em 1 hora.</p>
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-          <p style="color: #6b7280; font-size: 12px;">Este é um email automático, por favor não responda.</p>
-        </div>
-      `
-    });
-  } catch (error) {
-    console.error('Error sending password reset email:', error);
-    throw new Error('Erro ao enviar email de recuperação de senha');
-  }
-} 
+  await transporter.verify();
+  console.log('SMTP connection verified for password reset email');
+
+  await transporter.sendMail({
+    from: {
+      name: 'MED1',
+      address: process.env.SMTP_FROM as string
+    },
+    to,
+    subject: 'Redefinição de senha',
+    text: `Olá ${name},\n\nVocê solicitou a redefinição da sua senha. Clique no link abaixo para definir uma nova senha:\n\n${resetLink}\n\nSe você não solicitou esta redefinição, por favor ignore este email.\n\nAtenciosamente,\nEquipe MED1`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Redefinição de Senha</h2>
+        <p>Olá ${name},</p>
+        <p>Você solicitou a redefinição da sua senha. Clique no botão abaixo para definir uma nova senha:</p>
+        <p style="text-align: center;">
+          <a href="${resetLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin: 20px 0;">Redefinir Senha</a>
+        </p>
+        <p>Se o botão acima não funcionar, copie e cole o link abaixo no seu navegador:</p>
+        <p><a href="${resetLink}">${resetLink}</a></p>
+        <p>Se você não solicitou esta redefinição, por favor ignore este email.</p>
+        <p>Atenciosamente,<br>Equipe MED1</p>
+      </div>
+    `
+  });
+
+  console.log('Password reset email sent to:', to);
+}
+
+interface SendDocumentSharedEmailParams {
+  to: string;
+  recipientName: string;
+  senderName: string;
+  documentName: string;
+  loginUrl: string;
+}
+
+export async function sendDocumentSharedEmail({
+  to,
+  recipientName,
+  senderName,
+  documentName,
+  loginUrl
+}: SendDocumentSharedEmailParams) {
+  await transporter.verify();
+  console.log('SMTP connection verified for document shared email');
+
+  await transporter.sendMail({
+    from: {
+      name: 'Xase',
+      address: process.env.SMTP_FROM as string
+    },
+    to,
+    subject: 'Document Shared With You',
+    text: `Hello ${recipientName},\n\n${senderName} has shared a document with you: "${documentName}".\n\nYou can access this document by logging into your account.\n\n${loginUrl}\n\nRegards,\nMED1 Team`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Document Shared With You</h2>
+        <p>Hello ${recipientName},</p>
+        <p><strong>${senderName}</strong> has shared a document with you: <strong>"${documentName}"</strong>.</p>
+        <p>You can access this document by logging into your account:</p>
+        <p style="text-align: center;">
+          <a href="${loginUrl}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin: 20px 0;">Login to View Document</a>
+        </p>
+        <p>If the button above doesn't work, copy and paste the link below into your browser:</p>
+        <p><a href="${loginUrl}">${loginUrl}</a></p>
+        <p>Regards,<br>Xase Team</p>
+      </div>
+    `
+  });
+
+  console.log('Document shared email sent to:', to);
+}
