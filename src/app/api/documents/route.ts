@@ -4,16 +4,28 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getMinioClient } from "@/lib/minio";
 import { isPDFCorrupted } from "@/lib/pdf-test";
+import { withSubscription } from "@/lib/subscription-middleware";
+import { hasActiveSubscription } from "@/lib/stripe";
 
 const BUCKET_NAME = "futurostech";
 const ORIGINAL_FILES_PREFIX = "original/";
 const WATERMARKED_FILES_PREFIX = "watermarked/";
 
-export async function POST(req: NextRequest) {
+// Original POST handler wrapped with subscription middleware
+async function handleDocumentUpload(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    // Check if user has an active subscription
+    const hasSubscription = await hasActiveSubscription(session.user.id);
+    if (!hasSubscription) {
+      return NextResponse.json({ 
+        error: "Active subscription required to upload documents",
+        upgrade: true
+      }, { status: 403 });
     }
 
     const formData = await req.formData();
@@ -85,6 +97,9 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+// Export the POST handler with subscription middleware
+export const POST = (req: NextRequest) => withSubscription(req, handleDocumentUpload);
 
 export async function GET(req: NextRequest) {
   try {

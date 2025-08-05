@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,14 +18,23 @@ import {
   UserIcon,
   EnvelopeIcon,
   DevicePhoneMobileIcon,
-  ArrowLeftIcon
+  ArrowLeftIcon,
+  CreditCardIcon,
+  UserGroupIcon
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import { SubscriptionManager } from "@/components/SubscriptionManager";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [userData, setUserData] = useState({
+    clientCount: 0,
+    currentPlan: null,
+    subscriptionStatus: null,
+    currentPeriodEnd: null
+  });
 
   // Estados para as configurações
   const [notifications, setNotifications] = useState({
@@ -40,6 +49,30 @@ export default function SettingsPage() {
     biometric: false,
     passwordChange: false
   });
+  
+  // Buscar dados do usuário e assinatura
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (session?.user?.email) {
+        try {
+          const response = await fetch('/api/user/profile');
+          if (response.ok) {
+            const data = await response.json();
+            setUserData({
+              clientCount: data.clients?.length || 0,
+              currentPlan: data.subscription?.plan || null,
+              subscriptionStatus: data.subscription?.status || null,
+              currentPeriodEnd: data.subscription?.currentPeriodEnd || null
+            });
+          }
+        } catch (error) {
+          console.error('Erro ao buscar dados do usuário:', error);
+        }
+      }
+    };
+    
+    fetchUserData();
+  }, [session]);
 
   const handleNotificationChange = async (key: keyof typeof notifications) => {
     setNotifications(prev => ({
@@ -66,7 +99,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-black pt-20 pb-24 md:pt-12 md:pb-16 px-4">
+    <div className="min-h-[100dvh] bg-[#1c1d20] pt-20 pb-24 md:pt-12 md:pb-16 px-4">
       <div className="container mx-auto max-w-6xl lg:ml-52">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 sm:mb-3">
           <div>
@@ -87,8 +120,11 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="notifications" className="space-y-4">
+        <Tabs defaultValue="plan" className="space-y-4">
           <TabsList className="bg-zinc-900/50 border-zinc-800 rounded-2xl">
+            <TabsTrigger value="plan" className="data-[state=active]:bg-zinc-800 rounded-xl">
+              Plano
+            </TabsTrigger>
             <TabsTrigger value="notifications" className="data-[state=active]:bg-zinc-800 rounded-xl">
               Notificações
             </TabsTrigger>
@@ -244,6 +280,106 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Aba de Plano */}
+          <TabsContent value="plan">
+            <div className="space-y-4">
+              {/* Card de Informações do Cliente */}
+              <Card className="bg-zinc-900/50 border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.16)] transition-all duration-300 rounded-2xl">
+                <CardHeader className="px-4 py-3 sm:p-3">
+                  <CardTitle className="text-sm md:text-base font-bold text-white tracking-[-0.03em] font-inter flex items-center">
+                    <UserGroupIcon className="h-4 w-4 mr-2" />
+                    Informações do Cliente
+                  </CardTitle>
+                  <CardDescription className="text-xs text-zinc-400 tracking-[-0.03em] font-inter">
+                    Resumo dos seus clientes e uso da plataforma
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="px-4 py-3 sm:p-3 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-medium text-zinc-300">Total de Clientes</p>
+                      <p className="text-sm text-zinc-100">{userData.clientCount}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-zinc-300">Limite do Plano</p>
+                      <p className="text-sm text-zinc-100">
+                        {userData.currentPlan === 'basic' ? '100' : 
+                         userData.currentPlan === 'pro' ? '1000' : 
+                         userData.currentPlan === 'enterprise' ? '10000' : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="pt-2">
+                    <Button
+                      variant="outline"
+                      className="w-full bg-zinc-900/50 border-zinc-800 text-zinc-300 hover:bg-zinc-800/80 transition-all duration-300 rounded-2xl h-8 text-xs"
+                      onClick={() => router.push('/dashboard/clients')}
+                    >
+                      <UserGroupIcon className="h-3.5 w-3.5 mr-1.5" />
+                      Gerenciar Clientes
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card de Detalhes do Plano */}
+              <Card className="bg-zinc-900/50 border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.16)] transition-all duration-300 rounded-2xl">
+                <CardHeader className="px-4 py-3 sm:p-3">
+                  <CardTitle className="text-sm md:text-base font-bold text-white tracking-[-0.03em] font-inter flex items-center">
+                    <CreditCardIcon className="h-4 w-4 mr-2" />
+                    Detalhes do Plano
+                  </CardTitle>
+                  <CardDescription className="text-xs text-zinc-400 tracking-[-0.03em] font-inter">
+                    Informações sobre sua assinatura atual
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="px-4 py-3 sm:p-3 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-medium text-zinc-300">Plano Atual</p>
+                      <p className="text-sm text-zinc-100 capitalize">
+                        {userData.currentPlan || 'free'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-zinc-300">Status</p>
+                      <p className="text-sm text-zinc-100 capitalize">
+                        {userData.subscriptionStatus || 'ativo'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-zinc-300">Período Atual Termina</p>
+                      <p className="text-sm text-zinc-100">
+                        {userData.currentPeriodEnd ? 
+                          new Date(userData.currentPeriodEnd).toLocaleDateString('pt-BR') : 'ilimitado'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="pt-2">
+                    <Button
+                      variant="outline"
+                      className="w-full bg-zinc-900/50 border-zinc-800 text-zinc-300 hover:bg-zinc-800/80 transition-all duration-300 rounded-2xl h-8 text-xs"
+                      onClick={() => router.push('/dashboard/subscription')}
+                    >
+                      <CreditCardIcon className="h-3.5 w-3.5 mr-1.5" />
+                      Gerenciar Assinatura
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Opções de Plano */}
+              <div className="pt-2">
+                <SubscriptionManager
+                  currentPlan={userData.currentPlan}
+                  subscriptionStatus={userData.subscriptionStatus}
+                  currentPeriodEnd={userData.currentPeriodEnd ? new Date(userData.currentPeriodEnd) : null}
+                  clientCount={userData.clientCount}
+                />
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
