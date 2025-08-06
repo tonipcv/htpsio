@@ -7,8 +7,10 @@ import { RoleType } from '@prisma/client';
  * Hook to handle role-based redirects after login
  * Redirects users to different pages based on their role:
  * - CLIENT users go to /client-dashboard
- * - BUSINESS users go to /dashboard
- * - SUPER_ADMIN users go to /dashboard
+ * - BUSINESS users go to /documents
+ * - SUPER_ADMIN users go to /documents
+ * - admin users go to /documents
+ * - client users go to /client-dashboard
  */
 export function useRoleRedirect() {
   const { data: session, status } = useSession();
@@ -17,16 +19,18 @@ export function useRoleRedirect() {
   useEffect(() => {
     if (status === 'authenticated' && session?.user) {
       // Get the user's role from the session
-      const userRole = session.user.role as RoleType;
+      const userRole = session.user.role;
       
       // Redirect based on role
-      if (userRole === 'CLIENT') {
+      if (userRole === 'CLIENT' || userRole === 'client') {
         router.push('/client-dashboard');
-      } else if (userRole === 'BUSINESS' || userRole === 'SUPER_ADMIN') {
-        router.push('/dashboard');
+      } else if (userRole === 'BUSINESS' || userRole === 'SUPER_ADMIN' || userRole === 'admin') {
+        router.push('/documents');
       } else {
         // Default fallback if role is not recognized
-        router.push('/dashboard');
+        // For safety, direct unknown roles to client dashboard
+        console.log('Unknown role:', userRole);
+        router.push('/client-dashboard');
       }
     }
   }, [status, session, router]);
