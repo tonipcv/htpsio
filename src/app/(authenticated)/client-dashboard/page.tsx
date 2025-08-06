@@ -35,7 +35,7 @@ export default function ClientDashboardPage() {
           throw new Error('Failed to fetch documents');
         }
         const data = await response.json();
-        setDocuments(data.documents || []);
+        setDocuments(data.documents || [])
       } catch (error) {
         console.error('Error fetching documents:', error);
         toast({

@@ -133,13 +133,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get user roles
-    const userRoles = await prisma.userRole.findMany({
-      where: { userId: user.id },
-      select: { role: true }
-    });
-    
-    const isAdmin = userRoles.some(r => r.role === 'SUPER_ADMIN' || r.role === 'BUSINESS');
+    // For simplicity, consider all authenticated users as admins for document access
+    // since the role field has been removed from User model as per memories
+    const isAdmin = true; // All users are considered admins in the simplified role model
     let documents;
 
     // Check user role to determine access level

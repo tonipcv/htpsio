@@ -9,6 +9,7 @@ import { Card } from "./ui/card";
 import { Input } from "./ui/input";
 import { toast } from "./ui/use-toast";
 import { PDFPreviewModal } from "./ui/pdf-preview-modal";
+import { UploadStatusModal } from "./ui/upload-status-modal";
 import { Eye, Users, Share2, UserPlus, Trash2, Edit2, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Checkbox } from "./ui/checkbox";
@@ -62,6 +63,10 @@ export function DocumentManager() {
   const [clients, setClients] = useState<Client[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadStatusModalOpen, setIsUploadStatusModalOpen] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<"uploading" | "success" | "error">("uploading");
+  const [uploadFileName, setUploadFileName] = useState("");
+  const [uploadErrorMessage, setUploadErrorMessage] = useState("");
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
@@ -86,12 +91,15 @@ export function DocumentManager() {
       if (!response.ok) throw new Error("Falha ao carregar documentos");
       const data = await response.json();
       setDocuments(data);
+      return data;
     } catch (error) {
+      console.error("Error loading documents:", error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os documentos",
         variant: "destructive",
       });
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -135,7 +143,12 @@ export function DocumentManager() {
     if (!file) return;
 
     try {
+      // Show upload status modal
+      setUploadFileName(file.name);
+      setUploadStatus("uploading");
+      setIsUploadStatusModalOpen(true);
       setIsUploading(true);
+      
       const formData = new FormData();
       formData.append("file", file);
 
@@ -149,28 +162,50 @@ export function DocumentManager() {
       // Verificar se o usuário precisa fazer upgrade do plano
       if (!response.ok) {
         if (data.upgrade) {
+          setUploadStatus("error");
+          setUploadErrorMessage("O plano gratuito não permite deploy de documentos. Faça upgrade para continuar.");
+          
           toast({
             title: "Plano gratuito",
             description: "O plano gratuito não permite deploy de documentos. Faça upgrade para continuar.",
             variant: "destructive",
           });
           // Redirecionar para a página de pagamentos
-          router.push('/pricing');
+          setTimeout(() => router.push('/pricing'), 3000);
           return;
         }
         throw new Error("Falha no upload");
       }
 
-      setDocuments((prev) => [...prev, data]);
+      // Update upload status to success
+      setUploadStatus("success");
+      
+      // Add the new document to the list
+      setDocuments((prev) => {
+        const newDocs = [...prev];
+        // Check if document already exists in the list
+        const existingIndex = newDocs.findIndex(doc => doc.id === data.id);
+        if (existingIndex >= 0) {
+          // Replace existing document
+          newDocs[existingIndex] = data;
+        } else {
+          // Add new document
+          newDocs.push(data);
+        }
+        return newDocs;
+      });
       
       toast({
         title: "Sucesso",
         description: "Documento enviado com sucesso",
       });
 
-      // Recarregar a lista após o upload
-      loadDocuments();
+      // Recarregar a lista após o upload para garantir sincronização
+      await loadDocuments();
     } catch (error) {
+      setUploadStatus("error");
+      setUploadErrorMessage("Não foi possível enviar o documento");
+      
       toast({
         title: "Erro no upload",
         description: "Não foi possível enviar o documento",
@@ -560,6 +595,15 @@ export function DocumentManager() {
           documentName={selectedDocument.name}
         />
       )}
+      
+      {/* Upload Status Modal */}
+      <UploadStatusModal
+        isOpen={isUploadStatusModalOpen}
+        onClose={() => setIsUploadStatusModalOpen(false)}
+        status={uploadStatus}
+        fileName={uploadFileName}
+        errorMessage={uploadErrorMessage}
+      />
       
       {/* Rename Document Modal */}
       <Dialog open={isRenameModalOpen} onOpenChange={setIsRenameModalOpen}>
