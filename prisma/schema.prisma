@@ -30,7 +30,7 @@ model User {
   tenant          Tenant?       @relation(fields: [tenantId], references: [id])
   documents       Document[]
   documentDownloads DocumentDownload[]
-  verificationCode VerificationCode?
+  documentAccessLogs DocumentAccessLog[]
   
   // Relacionamentos para o sistema de clientes
   clients         User[]        @relation("AdminClient")
@@ -200,6 +200,7 @@ model Document {
   downloads   DocumentDownload[]
   user        User              @relation(fields: [userId], references: [id])
   documentAccess  DocumentAccess[]
+  accessLogs   DocumentAccessLog[]
 
   @@index([userId])
 }
@@ -245,11 +246,33 @@ model VerificationToken {
 
 model VerificationCode {
   id        String   @id @default(cuid())
-  userId    String   @unique
+  email     String   @unique
   code      String
+  verified  Boolean  @default(false)
   expiresAt DateTime
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([email])
+}
+
+model DocumentAccessLog {
+  id              String   @id @default(uuid())
+  documentId      String
+  userId          String?  // Registered user ID if available
+  visitorToken    String?  // Anonymous visitor token if userId not available
+  accessStartTime DateTime @default(now())
+  accessEndTime   DateTime? // When document was closed/tab changed
+  duration        Int?     // Duration in seconds
+  userAgent       String   // Complete browser user agent
+  ipAddress       String   // Visitor's IP address
+  city            String?  // Approximate location - city
+  country         String?  // Approximate location - country
+  document        Document @relation(fields: [documentId], references: [id])
+  user            User?    @relation(fields: [userId], references: [id])
+  createdAt       DateTime @default(now())
+
+  @@index([documentId])
   @@index([userId])
+  @@index([visitorToken])
+  @@index([accessStartTime])
 }

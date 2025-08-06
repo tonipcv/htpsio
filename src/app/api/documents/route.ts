@@ -19,11 +19,20 @@ async function handleDocumentUpload(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
-    // Check if user has an active subscription
-    const hasSubscription = await hasActiveSubscription(session.user.id);
-    if (!hasSubscription) {
+    // Verificar se o usuário tem uma assinatura ativa e não está no plano gratuito
+    const userWithSubscription = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { subscription: true }
+    });
+    
+    // Verificar se o usuário está no plano gratuito ou não tem assinatura
+    const isFreePlan = !userWithSubscription?.subscription || 
+                      userWithSubscription.subscription.plan === 'free' || 
+                      userWithSubscription.subscription.status !== 'active';
+    
+    if (isFreePlan) {
       return NextResponse.json({ 
-        error: "Active subscription required to upload documents",
+        error: "O plano gratuito não permite deploy de documentos",
         upgrade: true
       }, { status: 403 });
     }

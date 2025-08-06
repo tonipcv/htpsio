@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useDocumentTracking } from "@/hooks/useDocumentTracking";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Input } from "./ui/input";
@@ -55,6 +57,7 @@ const formatFileSize = (bytes: number): string => {
 
 export function DocumentManager() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -140,10 +143,24 @@ export function DocumentManager() {
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Falha no upload");
+      const data = await response.json();
+      
+      // Verificar se o usuário precisa fazer upgrade do plano
+      if (!response.ok) {
+        if (data.upgrade) {
+          toast({
+            title: "Plano gratuito",
+            description: "O plano gratuito não permite deploy de documentos. Faça upgrade para continuar.",
+            variant: "destructive",
+          });
+          // Redirecionar para a página de pagamentos
+          router.push('/pricing');
+          return;
+        }
+        throw new Error("Falha no upload");
+      }
 
-      const newDocument = await response.json();
-      setDocuments((prev) => [...prev, newDocument]);
+      setDocuments((prev) => [...prev, data]);
       
       toast({
         title: "Sucesso",

@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
     // Buscar o código de verificação
     const verificationRecord = await prisma.verificationCode.findUnique({
-      where: { userId: user.id }
+      where: { email: user.email }
     });
 
     if (!verificationRecord) {
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
 
     // Remover o código de verificação usado
     await prisma.verificationCode.delete({
-      where: { userId: user.id }
+      where: { email: user.email }
     });
 
     return NextResponse.json({ 

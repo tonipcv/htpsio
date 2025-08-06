@@ -2,7 +2,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { DocumentTextIcon, ChartBarIcon, ShieldCheckIcon, Cog6ToothIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { DocumentTextIcon, ChartBarIcon, ShieldCheckIcon, Cog6ToothIcon, UserGroupIcon, PresentationChartLineIcon } from '@heroicons/react/24/outline';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
@@ -28,14 +28,50 @@ export default function Navigation() {
   const { data: session } = useSession();
 
   const isAdmin = session?.user?.role === "admin";
+  const isSuperAdmin = session?.user?.role === "superadmin";
 
-  const navItems: NavItem[] = isAdmin ? [
-        {
-          href: '/dashboard',
-      label: 'Dashboard',
-          icon: ChartBarIcon,
-      description: 'Visão geral do sistema'
-          },
+  // Itens de navegação para superadmin (inclui gerenciamento de usuários)
+  const superAdminNavItems: NavItem[] = [
+    {
+      href: '/documents',
+      label: 'Documentos',
+      icon: DocumentTextIcon,
+      description: 'Gerenciar todos os documentos'
+    },
+    {
+      href: '/clients',
+      label: 'Clientes',
+      icon: UserGroupIcon,
+      description: 'Gerenciar clientes'
+    },
+    {
+      href: '/admin/users',
+      label: 'Usuários',
+      icon: UserGroupIcon,
+      description: 'Gerenciar usuários e planos'
+    },
+    {
+      href: '/admin/analytics',
+      label: 'Analytics',
+      icon: PresentationChartLineIcon,
+      description: 'Análise de acesso aos documentos'
+    },
+    {
+      href: '/protection-dashboard',
+      label: 'Proteção',
+      icon: ShieldCheckIcon,
+      description: 'Dashboard de proteção'
+    },
+    {
+      href: '/settings',
+      label: 'Configurações',
+      icon: Cog6ToothIcon,
+      description: 'Configurações do sistema'
+    }
+  ];
+  
+  // Itens de navegação para admin normal
+  const navItems: NavItem[] = isSuperAdmin ? superAdminNavItems : isAdmin ? [
           {
             href: '/documents',
       label: 'Gerenciar Documentos',
@@ -55,11 +91,17 @@ export default function Navigation() {
       description: 'Dashboard de proteção'
     },
     {
+      href: '/admin/analytics',
+      label: 'Analytics',
+      icon: PresentationChartLineIcon,
+      description: 'Análise de acesso aos documentos'
+    },
+    {
       href: '/settings',
       label: 'Configurações',
       icon: Cog6ToothIcon,
       description: 'Configurações do sistema'
-      }
+    }
     ] : [
           {
             href: '/documents',

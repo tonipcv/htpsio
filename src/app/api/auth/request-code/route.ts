@@ -10,6 +10,10 @@ function generateVerificationCode(): string {
 
 // Função para enviar o código por email
 async function sendVerificationCode(email: string, code: string, name?: string) {
+  if (!transporter) {
+    throw new Error('Email transporter not configured');
+  }
+  
   await transporter.verify();
   
   await transporter.sendMail({
@@ -63,13 +67,13 @@ export async function POST(req: NextRequest) {
 
     // Salvar o código no banco de dados
     await prisma.verificationCode.upsert({
-      where: { userId: user.id },
+      where: { email: user.email },
       update: {
         code: verificationCode,
         expiresAt
       },
       create: {
-        userId: user.id,
+        email: user.email,
         code: verificationCode,
         expiresAt
       }

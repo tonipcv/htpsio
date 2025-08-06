@@ -9,7 +9,7 @@ export function Logo({ className, variant = 'dark' }: LogoProps) {
   return (
     <div className={`relative w-32 h-10 ${className || ''}`}>
       <Image
-        src="/logo.png"
+        src={variant === 'light' ? "/logo-light.png" : "/logo.png"}
         alt="MED1 Logo"
         fill
         priority

@@ -107,7 +107,7 @@ export default function SettingsPage() {
             <p className="text-xs md:text-sm text-zinc-400 tracking-[-0.03em] font-inter">Gerencie suas preferências e configurações de segurança</p>
           </div>
           <div className="flex gap-2 mt-2 md:mt-0">
-            <Link href="/dashboard">
+            <Link href="/documents">
               <Button 
                 variant="outline" 
                 size="sm"

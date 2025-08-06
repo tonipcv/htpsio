@@ -2,10 +2,73 @@
 
 import { DocumentManager } from "@/components/DocumentManager";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "@/components/ui/use-toast";
 
 export default function DocumentsPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const isAdmin = session?.user?.role === "admin";
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAllowed, setIsAllowed] = useState(false);
+
+  useEffect(() => {
+    // Verificar se o usuário tem permissão para acessar a página de documentos
+    const checkSubscription = async () => {
+      if (!session?.user?.id) return;
+      
+      // Se o usuário for superadmin, permitir acesso irrestrito
+      if (session?.user?.role === "superadmin") {
+        setIsAllowed(true);
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/check-subscription');
+        const data = await response.json();
+        
+        if (!response.ok) {
+          if (data.upgrade) {
+            toast({
+              title: "Plano gratuito",
+              description: "O plano gratuito não permite acesso a documentos. Faça upgrade para continuar.",
+              variant: "destructive",
+            });
+            router.push('/pricing');
+            return;
+          }
+          throw new Error(data.error || "Erro ao verificar assinatura");
+        }
+        
+        setIsAllowed(true);
+      } catch (error) {
+        console.error("Erro ao verificar assinatura:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível verificar sua assinatura",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    checkSubscription();
+  }, [session, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#f5f5f7] border-r-transparent align-[-0.125em]"></div>
+      </div>
+    );
+  }
+
+  if (!isAllowed) {
+    return null; // Não renderiza nada enquanto redireciona
+  }
 
   return (
     <div className="flex-1 space-y-3 p-6">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useDocumentTracking } from '@/hooks/useDocumentTracking';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,12 @@ export function PDFPreviewModal({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  
+  // Track document viewing with our custom hook
+  const { isTracking } = useDocumentTracking({
+    documentId,
+    onError: (error) => console.error('Document tracking error:', error)
+  });
 
   const loadPreview = async () => {
     if (!isOpen || !documentId) return;

@@ -68,6 +68,17 @@ export async function hasActiveSubscription(userId: string): Promise<boolean> {
   return subscription?.status === 'active';
 }
 
+// Helper function to check if a user is on the free plan
+export async function isFreePlan(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { subscription: true },
+  });
+  
+  // Usuário está no plano gratuito se não tiver assinatura, se o plano for 'free' ou se a assinatura não estiver ativa
+  return !user?.subscription || user.subscription.plan === 'free' || user.subscription.status !== 'active';
+}
+
 // Helper function to check if a user is within their client limit
 export async function isWithinClientLimit(userId: string): Promise<boolean> {
   const user = await prisma.user.findUnique({
