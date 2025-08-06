@@ -31,7 +31,6 @@ export async function GET(
       where: { email: session.user.email },
       select: {
         id: true,
-        role: true,
         name: true,
         email: true,
       }
@@ -41,6 +40,24 @@ export async function GET(
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
+    
+    // Get user's roles
+    const userRoles = await prisma.userRole.findMany({
+      where: { userId: user.id },
+      select: { role: true }
+    });
+    
+    // Get user's primary role (highest privilege first)
+    const primaryRole = userRoles.find(r => r.role === 'SUPER_ADMIN')?.role ||
+                      userRoles.find(r => r.role === 'BUSINESS')?.role ||
+                      userRoles.find(r => r.role === 'CLIENT')?.role ||
+                      'USER';
+                      
+    // Create user object with role for backward compatibility
+    const userWithRole = {
+      ...user,
+      role: primaryRole
+    };
 
     // Get document
     const document = await prisma.document.findFirst({
@@ -67,8 +84,8 @@ export async function GET(
 
     // Verificar permissões
     const hasAccess = 
-      user.role === "admin" && document.userId === user.id || // Admin dono do documento
-      user.role === "client" && document.documentAccess.length > 0; // Cliente com acesso concedido
+      userWithRole.role === "admin" && document.userId === user.id || // Admin dono do documento
+      userWithRole.role === "client" && document.documentAccess.length > 0; // Cliente com acesso concedido
 
     if (!hasAccess) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
@@ -92,6 +109,23 @@ export async function GET(
           ipAddress: req.headers.get("x-forwarded-for") || "unknown",
           userAgent: req.headers.get("user-agent"),
         },
+      });
+
+      // Log the download
+      console.log(`📝 Logging download by ${userWithRole.role} ${user.email}`);
+      await prisma.documentAccessLog.create({
+        data: {
+          documentId: document.id,
+          userId: user.id,
+          ipAddress: (req.headers.get('x-forwarded-for') || 'unknown').split(',')[0].trim(),
+          userAgent: req.headers.get('user-agent') || 'unknown',
+          accessStartTime: new Date(),
+          accessEndTime: new Date(),
+          duration: 0,
+          city: 'unknown',
+          country: 'unknown',
+          visitorToken: null
+        }
       });
 
       // Get original file from MinIO
@@ -123,7 +157,7 @@ export async function GET(
 
       // Add watermark and save to watermarked folder
       console.log("💧 Adding watermark to PDF...");
-      const watermarkContent = user.role === "client" 
+      const watermarkContent = userWithRole.role === "CLIENT" 
         ? `Client: ${user.name || user.email} | ID: ${user.id.slice(0, 8)}`
         : `${user.name || user.email} | ${new Date().toISOString().slice(0, 10)}`;
       const watermarkedContent = await addWatermark(fileContent, watermarkContent, {

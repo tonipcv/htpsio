@@ -30,7 +30,6 @@ export async function GET() {
         id: true,
         name: true,
         email: true,
-        role: true,
         plan: true,
         isPremium: true,
         emailVerified: true,
@@ -41,8 +40,28 @@ export async function GET() {
         createdAt: 'desc',
       },
     });
+    
+    // Buscar os papéis de cada usuário
+    const usersWithRoles = await Promise.all(users.map(async (user) => {
+      const userRoles = await prisma.userRole.findMany({
+        where: { userId: user.id },
+        select: { role: true }
+      });
+      
+      // Determinar o papel principal do usuário (prioridade para SUPER_ADMIN > BUSINESS > CLIENT)
+      let primaryRole = userRoles.find(ur => ur.role === 'SUPER_ADMIN')?.role ||
+                       userRoles.find(ur => ur.role === 'BUSINESS')?.role ||
+                       userRoles.find(ur => ur.role === 'CLIENT')?.role ||
+                       'USER';
+      
+      return {
+        ...user,
+        primaryRole,
+        roles: userRoles.map(ur => ur.role)
+      };
+    }));
 
-    return NextResponse.json({ users });
+    return NextResponse.json({ users: usersWithRoles });
   } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json(

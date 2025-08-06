@@ -141,13 +141,19 @@ export async function POST(req: Request) {
         },
       });
       
+      // Buscar o papel do usuário para incluir no token JWT
+      const userRole = await prisma.userRole.findFirst({
+        where: { userId: updatedUser.id },
+        orderBy: { createdAt: 'desc' }
+      });
+      
       // Gerar token JWT para login automático
       const token = await signJwtToken({
         id: updatedUser.id,
         email: updatedUser.email,
         name: updatedUser.name,
         type: 'user',
-        role: updatedUser.role || 'user',
+        role: userRole?.role || 'CLIENT', // Usar o papel do UserRole ou CLIENT como padrão
         userSlug: updatedUser.slug,
         image: updatedUser.image || undefined,
         plan: updatedUser.plan || 'free',
@@ -197,9 +203,17 @@ export async function POST(req: Request) {
         email,
         password: hashedPassword,
         slug,
-        role: "admin",
         plan: "free",
       },
+    });
+    
+    // Criar papel de ADMIN para o usuário
+    await prisma.userRole.create({
+      data: {
+        userId: user.id,
+        role: "BUSINESS",
+        tenantId: process.env.DEFAULT_TENANT_ID || "default-tenant" // Usar tenant padrão ou criar um
+      }
     });
 
     // Remove the verification code
@@ -213,7 +227,7 @@ export async function POST(req: Request) {
       email: user.email,
       name: user.name,
       type: 'user',
-      role: user.role || 'admin',
+      role: 'BUSINESS', // Papel criado acima
       userSlug: user.slug,
       image: undefined,
       plan: user.plan || 'free',

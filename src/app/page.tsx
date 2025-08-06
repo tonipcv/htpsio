@@ -6,17 +6,14 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { useRoleRedirect } from '@/hooks/use-role-redirect';
 
 export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { isLoading } = useRoleRedirect(); // Use our custom hook for role-based redirection
 
-  useEffect(() => {
-    if (status === 'loading') return;
-    if (session) {
-      router.push('/documents');
-    }
-  }, [session, status, router]);
+  // This effect is now handled by the useRoleRedirect hook
 
   if (status === 'loading') {
     return (

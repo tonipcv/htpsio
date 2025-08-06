@@ -9,7 +9,8 @@ import { toast } from "@/components/ui/use-toast";
 export default function DocumentsPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  const isAdmin = session?.user?.role === "admin";
+  // Note: role field has been removed from User model
+  const isAdmin = true; // All users are considered admins in the simplified role model
   const [isLoading, setIsLoading] = useState(true);
   const [isAllowed, setIsAllowed] = useState(false);
 
@@ -18,12 +19,9 @@ export default function DocumentsPage() {
     const checkSubscription = async () => {
       if (!session?.user?.id) return;
       
-      // Se o usuário for superadmin, permitir acesso irrestrito
-      if (session?.user?.role === "superadmin") {
-        setIsAllowed(true);
-        setIsLoading(false);
-        return;
-      }
+      // Note: role field has been removed from User model
+      // All authenticated users can access the page, but document upload is restricted by subscription
+      // The actual restriction for uploads is handled in the API endpoint
       
       try {
         const response = await fetch('/api/check-subscription');

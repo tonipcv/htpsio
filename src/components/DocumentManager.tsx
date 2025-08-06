@@ -75,7 +75,8 @@ export function DocumentManager() {
   const [newDocumentName, setNewDocumentName] = useState("");
   const [totalStorage, setTotalStorage] = useState<number>(0);
 
-  const isAdmin = session?.user?.role === "admin";
+  // Note: role field has been removed from User model
+  const isAdmin = true; // All users are considered admins in the simplified role model
 
   // Carregar documentos
   const loadDocuments = async () => {

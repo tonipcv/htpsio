@@ -124,7 +124,6 @@ export async function GET(req: NextRequest) {
       where: { email: session.user.email },
       select: {
         id: true,
-        role: true,
         adminId: true,
       }
     });
@@ -134,9 +133,17 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Get user roles
+    const userRoles = await prisma.userRole.findMany({
+      where: { userId: user.id },
+      select: { role: true }
+    });
+    
+    const isAdmin = userRoles.some(r => r.role === 'SUPER_ADMIN' || r.role === 'BUSINESS');
     let documents;
 
-    if (user.role === "admin") {
+    // Check user role to determine access level
+    if (isAdmin) {
       // Admin vê todos os documentos que ele criou
       documents = await prisma.document.findMany({
         where: {
@@ -165,8 +172,12 @@ export async function GET(req: NextRequest) {
           }
         },
       });
-    } else if (user.role === "client") {
-      // Cliente vê apenas documentos compartilhados com ele
+    } else {
+      // Non-admin users see only documents shared with them
+      if (!user) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+      
       documents = await prisma.document.findMany({
         where: {
           documentAccess: {
@@ -181,14 +192,24 @@ export async function GET(req: NextRequest) {
         include: {
           user: {
             select: {
+              id: true,
               name: true,
               email: true,
             },
           },
+          documentAccess: {
+            include: {
+              client: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                }
+              }
+            }
+          }
         },
       });
-    } else {
-      return NextResponse.json({ error: "Invalid user role" }, { status: 403 });
     }
 
     console.log("Documents found:", documents); // Debug documents

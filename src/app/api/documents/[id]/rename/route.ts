@@ -29,8 +29,15 @@ export async function POST(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Only admins can rename documents
-    if (user.role !== "admin") {
+    // Check if user is an admin
+    const userRoles = await prisma.userRole.findMany({
+      where: { userId: user.id },
+      select: { role: true }
+    });
+    
+    const isAdmin = userRoles.some(r => r.role === 'SUPER_ADMIN' || r.role === 'BUSINESS');
+    
+    if (!isAdmin) {
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 

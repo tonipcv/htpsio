@@ -13,7 +13,6 @@ model User {
   email           String        @unique
   password        String
   slug            String        @unique
-  role            String        @default("admin") // "admin" ou "client"
   adminId         String?       // ID do admin que cadastrou o cliente (null para admins)
   createdAt       DateTime      @default(now())
   image           String?
@@ -37,10 +36,10 @@ model User {
   admin           User?         @relation("AdminClient", fields: [adminId], references: [id])
   documentAccess  DocumentAccess[]
   grantedAccess   DocumentAccess[] @relation("GrantedBy")
+  userRoles       UserRole[]
 
   @@index([tenantId])
   @@index([adminId])
-  @@index([role])
   @@map("users")
 }
 
@@ -55,6 +54,7 @@ model Tenant {
   installer        Installer?
   protectionStatus ProtectionStatus?
   users            User[]
+  userRoles        UserRole[]
 }
 
 model ActivationStatus {
@@ -253,6 +253,27 @@ model VerificationCode {
   createdAt DateTime @default(now())
 
   @@index([email])
+}
+
+model UserRole {
+  id         String   @id @default(cuid())
+  userId     String
+  tenantId   String
+  role       RoleType
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id])
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@unique([userId, tenantId, role])
+  @@index([userId])
+  @@index([tenantId])
+}
+
+enum RoleType {
+  SUPER_ADMIN
+  BUSINESS
+  CLIENT
 }
 
 model DocumentAccessLog {

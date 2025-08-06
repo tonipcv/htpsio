@@ -71,7 +71,14 @@ export function PDFPreviewModal({
 
         const response = await fetch(`/api/documents/${documentId}/preview`);
         if (!response.ok) {
-          throw new Error('Failed to load preview');
+          // Try to get detailed error information
+          try {
+            const errorData = await response.json();
+            console.error('Document preview error details:', errorData);
+            throw new Error(`Failed to load preview: ${errorData.error || 'Unknown error'} ${errorData.details ? JSON.stringify(errorData.details) : ''}`);
+          } catch (jsonError) {
+            throw new Error(`Failed to load preview: ${response.status} ${response.statusText}`);
+          }
         }
 
         const data = await response.json();

@@ -23,19 +23,24 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user
+    // Get user with their roles
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: {
-        id: true,
-        role: true,
-        name: true,
-        email: true,
+      include: {
+        userRoles: true
       }
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    
+    // Determine user's primary role
+    let primaryRole = "CLIENT";
+    if (user.userRoles.some(ur => ur.role === "SUPER_ADMIN")) {
+      primaryRole = "SUPER_ADMIN";
+    } else if (user.userRoles.some(ur => ur.role === "BUSINESS")) {
+      primaryRole = "BUSINESS";
     }
 
     // Get document with minimal fields
@@ -57,13 +62,53 @@ export async function GET(
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
 
-    // Check permissions
-    const hasAccess = 
-      user.role === "admin" && document.userId === user.id || 
-      user.role === "client" && document.documentAccess.length > 0;
-
+    // Check permissions with detailed logging
+    console.log("=== DOCUMENT PREVIEW ACCESS CHECK ===");
+    console.log("User ID:", user.id);
+    console.log("Document ID:", document.id);
+    console.log("Document Owner ID:", document.userId);
+    console.log("Primary Role:", primaryRole);
+    console.log("User Roles:", user.userRoles.map(ur => ur.role));
+    console.log("Document Access Count:", document.documentAccess.length);
+    console.log("Document Access Records:", document.documentAccess);
+    
+    // Check if user is owner
+    const isOwner = document.userId === user.id;
+    console.log("Is Owner?", isOwner);
+    
+    // Check if user has admin/business access
+    const hasAdminAccess = (primaryRole === "SUPER_ADMIN" || primaryRole === "BUSINESS") && isOwner;
+    console.log("Has Admin Access?", hasAdminAccess);
+    
+    // Check if user has client access via document sharing
+    const hasClientSharedAccess = primaryRole === "CLIENT" && document.documentAccess.length > 0;
+    console.log("Has Client Shared Access?", hasClientSharedAccess);
+    
+    // Check if client is the document owner (should also have access)
+    const isClientOwner = primaryRole === "CLIENT" && isOwner;
+    console.log("Is Client Owner?", isClientOwner);
+    
+    // Determine overall access - owner always has access regardless of role
+    const hasAccess = isOwner || hasClientSharedAccess;
+    console.log("FINAL ACCESS DECISION:", hasAccess ? "GRANTED" : "DENIED");
+    
     if (!hasAccess) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+      console.error("=== ACCESS DENIED DETAILS ===");
+      console.error("User:", user.email);
+      console.error("Document:", document.name);
+      console.error("Reason:", !isOwner ? "Not document owner" : "No document access record");
+      
+      return NextResponse.json({ 
+        error: "Access denied", 
+        details: {
+          role: primaryRole,
+          isOwner,
+          hasDocumentAccess: document.documentAccess.length > 0,
+          message: primaryRole === "CLIENT" 
+            ? "This document has not been shared with you" 
+            : "You do not have permission to view this document"
+        }
+      }, { status: 403 });
     }
 
     // Get MinIO client
@@ -112,7 +157,7 @@ export async function GET(
       const fileContent = Buffer.concat(chunks);
 
       // Add watermark with preview text
-      const watermarkText = user.role === "client"
+      const watermarkText = primaryRole === "CLIENT"
         ? `Cliente: ${user.name || user.email} | ID: ${user.id.slice(0, 8)} | Preview`
         : `ID:${user.id.slice(0, 8)} • ${new Date().toISOString().slice(0, 10)}`;
       

@@ -30,10 +30,18 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { id: true, role: true }
+      select: { id: true }
+    });
+    
+    // Verificar se o usuário tem papel de admin
+    const userRole = await prisma.userRole.findFirst({
+      where: { 
+        userId: user?.id,
+        role: { in: ['SUPER_ADMIN', 'BUSINESS'] }
+      }
     });
 
-    if (!user || user.role !== "admin") {
+    if (!user || !userRole) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
@@ -104,18 +112,35 @@ export async function POST(req: NextRequest) {
           .update(resetToken)
           .digest("hex");
 
-        // Create client
+        // First create a tenant for the client
+        const tenant = await prisma.tenant.create({
+          data: {
+            name: `${record.name}'s Account`,
+            slug: slug + '-tenant'
+          }
+        });
+        
+        // Create client user with the tenant ID
         const client = await prisma.user.create({
           data: {
             name: record.name,
             email: record.email,
             password: "",
             slug,
-            role: "client",
             adminId: user.id,
+            tenantId: tenant.id,
             resetToken: hashedToken,
-            resetTokenExpiry: new Date(Date.now() + 3600000), // 1 hour from now
-          },
+            resetTokenExpiry: new Date(Date.now() + 3600000) // 1 hour from now
+          }
+        });
+        
+        // Assign CLIENT role to the user
+        await prisma.userRole.create({
+          data: {
+            userId: client.id,
+            role: 'CLIENT',
+            tenantId: tenant.id
+          }
         });
 
         // Send welcome email

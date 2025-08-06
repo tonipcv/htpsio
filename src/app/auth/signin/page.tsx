@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, Suspense } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { useRoleRedirect } from "@/hooks/use-role-redirect";
 
 export default function SignIn() {
   return (
@@ -23,8 +24,12 @@ export default function SignIn() {
 function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/documents";
+  // We'll handle redirection based on role instead of using callbackUrl
+  const callbackUrl = "/";
   const error = searchParams.get('error');
+  
+  // Use our custom hook for role-based redirection
+  useRoleRedirect();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -143,7 +148,7 @@ function SignInContent() {
         }
         
         if (result?.ok) {
-          router.push(callbackUrl);
+          // Let the useRoleRedirect hook handle the redirection based on role
           router.refresh();
         }
       }

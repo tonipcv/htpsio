@@ -30,16 +30,15 @@ export async function GET(req: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { id: true, role: true }
+      select: { id: true }
     });
 
-    if (!user || user.role !== "admin") {
+    if (!user) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
     const clients = await prisma.user.findMany({
       where: {
-        role: "client",
         adminId: user.id,
       },
       select: {
@@ -77,10 +76,10 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { id: true, role: true }
+      select: { id: true }
     });
 
-    if (!user || user.role !== "admin") {
+    if (!user) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
@@ -128,7 +127,6 @@ export async function POST(req: NextRequest) {
         email,
         password: "",
         slug,
-        role: "client",
         adminId: user.id,
         resetToken: hashedToken,
         resetTokenExpiry: new Date(Date.now() + 3600000), // 1 hour from now

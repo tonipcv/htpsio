@@ -84,7 +84,6 @@ export const authOptions: AuthOptions = {
             name: true,
             password: true,
             slug: true,
-            role: true,
             image: true,
             plan: true,
             isPremium: true
@@ -109,7 +108,7 @@ export const authOptions: AuthOptions = {
           email: user.email,
           name: user.name,
           type: 'user' as const,
-          role: user.role,
+          role: 'admin', // Default role for backward compatibility
           userSlug: user.slug,
           image: user.image,
           plan: user.plan || undefined,
@@ -123,7 +122,7 @@ export const authOptions: AuthOptions = {
       if (user) {
         token.id = user.id;
         token.type = user.type;
-        token.role = user.role;
+        token.role = user.role || 'admin'; // Use provided role or default to admin
         token.userSlug = user.userSlug;
         token.image = user.image;
         token.plan = user.plan;

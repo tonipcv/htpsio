@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
@@ -31,8 +31,27 @@ export default function PricingPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  
+  // Disable the redirect completely for testing
+  useEffect(() => {
+    // Log session data for debugging
+    console.log('Session data:', session);
+    
+    // Check if we're coming from the client dashboard upgrade button
+    const fromUpgrade = sessionStorage.getItem('fromClientDashboardUpgrade');
+    console.log('From upgrade flag:', fromUpgrade);
+    
+    // If we're coming from client dashboard, don't redirect
+    if (fromUpgrade === 'true') {
+      console.log('Upgrade flow detected from client dashboard');
+      // Clear the flag after using it
+      sessionStorage.removeItem('fromClientDashboardUpgrade');
+    }
+    
+    // Temporarily disable all redirects for testing
+    // No redirects at all to debug the issue
+  }, [session, router]);
 
   // Handle subscription checkout
   const handleSelectPlan = async (planId: string) => {
@@ -71,6 +90,18 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-zinc-900 pb-12 flex flex-col items-center">
+      {/* Back to Documents Button */}
+      <div className="w-full max-w-7xl px-4 pt-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+          onClick={() => window.location.href = '/client-dashboard'}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Documents
+        </Button>
+      </div>
       <div className="container max-w-5xl px-4 py-16 flex flex-col items-center">
         {/* Logo */}
         <div className="mb-12">
