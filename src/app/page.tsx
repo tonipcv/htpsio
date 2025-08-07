@@ -38,29 +38,26 @@ export default function Home() {
             priority
             className="h-12 w-12 brightness-0 invert mx-auto"
           />
-          <p className="text-[#f5f5f7]/70 text-sm font-light tracking-wide">
-            Your complete ecosystem for Data Protection
-          </p>
         </div>
 
         {/* Action Buttons */}
         <div className="space-y-3">
-          <Link href="/auth/signin" className="block">
+          <Link href="/auth/signin-docs" className="block">
             <Button 
               className="w-full py-5 bg-transparent hover:bg-[#f5f5f7]/5 text-[#f5f5f7] border border-[#f5f5f7]/10 rounded-lg text-sm font-light tracking-wide transition-all"
             >
-              Sign in
+              I'm client
             </Button>
           </Link>
           
-          <a href="https://magic.htps.io/demo" target="_blank" rel="noopener noreferrer" className="block">
+          <Link href="/auth/signin" className="block">
             <Button 
               variant="outline"
               className="w-full py-5 bg-transparent hover:bg-[#f5f5f7]/5 text-[#f5f5f7]/70 hover:text-[#f5f5f7] border-[#f5f5f7]/10 rounded-lg text-sm font-light tracking-wide transition-all"
             >
-              Get a demo
+              I'm business
             </Button>
-          </a>
+          </Link>
         </div>
       </div>
     </div>

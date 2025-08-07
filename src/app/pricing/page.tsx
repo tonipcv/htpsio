@@ -120,6 +120,7 @@ export default function PricingPage() {
         <div className="text-center mb-12">
           <h1 className="text-3xl font-medium text-white tracking-tight">Choose Your Plan</h1>
           <p className="mt-3 text-lg text-zinc-400 max-w-2xl">Get started with the right plan for your business</p>
+          <p className="mt-2 text-md text-primary font-medium">All plans include a 14-day free trial</p>
         </div>
 
         {/* Navigation buttons */}
@@ -175,7 +176,7 @@ export default function PricingPage() {
                       Processing...
                     </>
                   ) : (
-                    `Select ${plan.name}`
+                    `Start 14-day free trial`
                   )}
                 </Button>
               </CardFooter>
