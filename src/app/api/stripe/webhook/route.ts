@@ -123,6 +123,63 @@ export async function POST(req: NextRequest) {
             isPremium: subscription.status === 'active',
           },
         });
+        
+        // If subscription is active, ensure user has BUSINESS role
+        if (subscription.status === 'active') {
+          // Get the user with their tenant information
+          const user = await prisma.user.findUnique({
+            where: { id: userSubscription.userId },
+            include: { tenant: true }
+          });
+          
+          if (!user) {
+            console.error(`[Stripe Webhook] User not found for subscription ${subscription.id}`);
+            break;
+          }
+          
+          // Check if user already has BUSINESS role
+          const existingRole = await prisma.userRole.findFirst({
+            where: {
+              userId: user.id,
+              role: 'BUSINESS'
+            }
+          });
+          
+          // If not, assign BUSINESS role
+          if (!existingRole) {
+            let tenantId = user.tenantId;
+            
+            // If user doesn't have a tenant, create one
+            if (!tenantId) {
+              const newTenant = await prisma.tenant.create({
+                data: {
+                  name: `${user.name}'s Tenant`,
+                  slug: `${user.slug}-tenant`
+                }
+              });
+              
+              // Update user with new tenant ID
+              await prisma.user.update({
+                where: { id: user.id },
+                data: { tenantId: newTenant.id }
+              });
+              
+              tenantId = newTenant.id;
+              console.log(`[Stripe Webhook] Created new tenant ${tenantId} for user ${user.id}`);
+            }
+            
+            // Now create the BUSINESS role with tenant ID
+            await prisma.userRole.create({
+              data: {
+                userId: user.id,
+                role: 'BUSINESS',
+                tenantId: tenantId
+              }
+            });
+            
+            console.log(`[Stripe Webhook] Assigned BUSINESS role to user ${user.id} with active subscription and tenant ${tenantId}`);
+          }
+        }
       }
       break;
     }
@@ -148,11 +205,23 @@ export async function POST(req: NextRequest) {
         // Update user's isPremium status
         await prisma.user.update({
           where: { id: userSubscription.userId },
-          data: { 
+          data: {
             isPremium: false,
-            plan: 'free'
           },
         });
+        
+        // Note: We're not removing the BUSINESS role when subscription ends
+        // If you want to remove the role, uncomment the code below:
+        /*
+        // Remove BUSINESS role if subscription is canceled
+        await prisma.userRole.deleteMany({
+          where: {
+            userId: userSubscription.userId,
+            role: 'BUSINESS'
+          }
+        });
+        console.log(`[Stripe Webhook] Removed BUSINESS role from user ${userSubscription.userId} due to subscription cancellation`);
+        */
       }
       break;
     }

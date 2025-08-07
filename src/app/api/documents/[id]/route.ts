@@ -30,10 +30,19 @@ export async function DELETE(req: NextRequest) {
       select: { role: true }
     });
     
+    console.log(`[Document Delete] User roles for ${user.email}:`, userRoles);
+    
     const isAdmin = userRoles.some(r => r.role === 'SUPER_ADMIN' || r.role === 'BUSINESS');
+    console.log(`[Document Delete] Is user admin? ${isAdmin}`);
     
     if (!isAdmin) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      const errorResponse = { 
+        error: "Permission denied", 
+        details: "You need SUPER_ADMIN or BUSINESS role to delete documents",
+        userRoles: userRoles.map(r => r.role)
+      };
+      console.log(`[Document Delete] Permission denied:`, errorResponse);
+      return NextResponse.json(errorResponse, { status: 403 });
     }
 
     // Find document
@@ -46,8 +55,16 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Verify ownership
+    console.log(`[Document Delete] Document owner ID: ${document.userId}, Current user ID: ${user.id}`);
     if (document.userId !== user.id) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      const errorResponse = { 
+        error: "Permission denied", 
+        details: "You can only delete documents that you own",
+        documentOwnerId: document.userId,
+        currentUserId: user.id
+      };
+      console.log(`[Document Delete] Ownership verification failed:`, errorResponse);
+      return NextResponse.json(errorResponse, { status: 403 });
     }
 
     // Delete document from MinIO
@@ -71,11 +88,21 @@ export async function DELETE(req: NextRequest) {
       // Continue with database deletion even if storage deletion fails
     }
 
+    // Delete related document downloads
+    await prisma.documentDownload.deleteMany({
+      where: { documentId: id },
+    });
+
     // Delete document access records first (foreign key constraint)
     await prisma.documentAccess.deleteMany({
       where: { documentId: id },
     });
-    
+
+    // Delete document access logs
+    await prisma.documentAccessLog.deleteMany({
+      where: { documentId: id },
+    });
+
     // Delete document record
     await prisma.document.delete({
       where: { id },
@@ -85,7 +112,10 @@ export async function DELETE(req: NextRequest) {
   } catch (error) {
     console.error("Delete document error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { 
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error occurred"
+      },
       { status: 500 }
     );
   }

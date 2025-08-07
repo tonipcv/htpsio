@@ -20,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
 interface Document {
   id: string;
@@ -307,35 +308,79 @@ export function DocumentManager() {
     }
   };
 
+  // Estado para o modal de confirmação de exclusão
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    isOpen: false,
+    documentId: "",
+  });
+
+  // Abrir modal de confirmação de exclusão
+  const openDeleteConfirmation = (documentId: string) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      documentId,
+    });
+  };
+
+  // Fechar modal de confirmação de exclusão
+  const closeDeleteConfirmation = () => {
+    setDeleteConfirmation({
+      isOpen: false,
+      documentId: "",
+    });
+  };
+
   // Deletar documento
   const handleDeleteDocument = async (documentId: string) => {
-    if (!confirm("Tem certeza que deseja excluir este documento?")) {
-      return;
-    }
-    
+    openDeleteConfirmation(documentId);
+  };
+
+  // Confirmar exclusão do documento
+  const confirmDeleteDocument = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/documents/${documentId}`, {
+      const response = await fetch(`/api/documents/${deleteConfirmation.documentId}`, {
         method: "DELETE",
       });
       
-      if (!response.ok) throw new Error("Falha ao excluir documento");
+      if (!response.ok) {
+        const errorData = await response.json();
+        // Log detailed error information to console
+        console.error('Erro ao excluir documento:', JSON.stringify(errorData, null, 2));
+        
+        // Create a more descriptive error message
+        let errorMessage = "Falha ao excluir documento";
+        
+        if (errorData.details) {
+          errorMessage = errorData.details;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        
+        // Add role information if available
+        if (errorData.userRoles) {
+          errorMessage += `. Suas funções atuais: ${errorData.userRoles.join(', ') || 'nenhuma'}`;
+        }
+        
+        throw new Error(errorMessage);
+      }
       
       // Remove o documento da lista
-      setDocuments(documents.filter(doc => doc.id !== documentId));
+      setDocuments(documents.filter(doc => doc.id !== deleteConfirmation.documentId));
       
       toast({
         title: "Sucesso",
         description: "Documento excluído com sucesso",
       });
-    } catch (error) {
+      setIsLoading(false);
+      closeDeleteConfirmation();
+    } catch (error: any) {
+      console.error('Erro ao excluir documento:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível excluir o documento",
+        description: error instanceof Error ? error.message : "Não foi possível excluir o documento",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -711,6 +756,19 @@ export function DocumentManager() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de confirmação de exclusão */}
+      <ConfirmationDialog
+        isOpen={deleteConfirmation.isOpen}
+        onClose={closeDeleteConfirmation}
+        onConfirm={confirmDeleteDocument}
+        title="Delete Document"
+        description="Are you sure you want to delete this document? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        isLoading={isLoading}
+      />
     </div>
   );
-} 
+}

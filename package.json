@@ -18,6 +18,7 @@
     "fix-columns": "tsx scripts/fix-columns.ts",
     "check-tables": "tsx scripts/check-tables.ts",
     "add-tenant-id": "tsx scripts/add-tenant-id.ts",
+    "assign-business-role": "tsx scripts/assign-business-role.ts",
     "test-connection": "tsx scripts/test-connection.ts"
   },
   "dependencies": {
