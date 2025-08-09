@@ -23,6 +23,10 @@ model User {
   resetToken      String?       // Token for password reset/creation
   resetTokenExpiry DateTime?    // Expiry time for reset token
   emailVerified   DateTime?     // Add this field for email verification status
+  companyName     String?       // Company name for registration
+  teamSize        String?       // Team size for registration
+  industry        String?       // Industry for registration
+  customIndustry  String?       // Custom industry when "other" is selected
   devices         Device[]
   pages           Page[]
   subscription    Subscription?
@@ -41,6 +45,7 @@ model User {
   @@index([tenantId])
   @@index([adminId])
   @@map("users")
+
 }
 
 model Tenant {

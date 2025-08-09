@@ -1,81 +1,46 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
-import Link from 'next/link';
-import { Button } from "@/components/ui/button";
-import { RegisterSteps } from "@/components/auth/RegisterSteps";
+import { Suspense } from "react";
 import Image from "next/image";
-import { ArrowLeft } from 'lucide-react';
+import Link from "next/link";
+import RegisterSteps from "@/components/auth/RegisterSteps";
 
 export default function RegisterPage() {
   return (
-    <div className="min-h-screen bg-zinc-900 pb-12 flex flex-col items-center">
-      <div className="container max-w-3xl px-4 py-16 flex flex-col items-center">
-        {/* Logo */}
-        <div className="mb-12">
-          <div className="relative w-40 h-12">
-            <Image
-              src="/logo.png"
-              alt="MED1 Logo"
-              fill
-              priority
-              className="object-contain invert brightness-200"
-            />
-          </div>
+    <Suspense fallback={<div>Loading...</div>}>
+      <RegisterContent />
+    </Suspense>
+  );
+}
+
+function RegisterContent() {
+  return (
+    <div className="relative min-h-screen bg-[#1c1d20] flex items-center justify-center p-4">
+      <div className="relative w-full max-w-md bg-[#1c1d20] rounded-xl p-8 border border-[#f5f5f7]/10">
+        <div className="relative text-center mb-8">
+          <Image
+            src="/logo.png"
+            alt="Logo"
+            width={48}
+            height={48}
+            priority
+            className="relative h-12 w-12 brightness-0 invert mx-auto"
+          />
         </div>
+
+        <h1 className="text-xl font-medium text-[#f5f5f7] text-center mb-6">Create Account</h1>
         
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-medium text-white tracking-tight">Create Account</h1>
-          <p className="mt-3 text-lg text-zinc-400 max-w-2xl">Follow the steps below to create your account</p>
-        </div>
+        <RegisterSteps />
 
-        {/* Navigation buttons */}
-        <div className="absolute top-4 left-4">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-zinc-500 hover:text-zinc-400 flex items-center gap-2"
-            asChild
+        <div className="relative text-center mt-6">
+          <Link 
+            href="/auth/signin" 
+            className="relative text-[#f5f5f7]/70 hover:text-[#f5f5f7] text-sm block"
           >
-            <Link href="/">
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Link>
-          </Button>
-        </div>
-
-        {/* Login link */}
-        <div className="absolute top-4 right-4">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-zinc-500 hover:text-zinc-400"
-            asChild
-          >
-            <Link href="/auth/signin">
-              Sign in
-            </Link>
-          </Button>
-        </div>
-
-        {/* Registration Form */}
-        <div className="w-full max-w-md bg-zinc-800 border border-zinc-700 shadow-sm rounded-lg p-6">
-          <RegisterSteps />
+            Already have an account? Sign in
+          </Link>
         </div>
       </div>
-      
-      {/* CSS para corrigir o fundo branco do preenchimento automático */}
-      <style jsx global>{`
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover, 
-        input:-webkit-autofill:focus, 
-        input:-webkit-autofill:active {
-          -webkit-box-shadow: 0 0 0 30px #27272a inset !important;
-          -webkit-text-fill-color: white !important;
-          transition: background-color 5000s ease-in-out 0s;
-        }
-      `}</style>
     </div>
   );
 }

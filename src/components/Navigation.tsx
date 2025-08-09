@@ -57,12 +57,6 @@ export default function Navigation() {
       description: 'Análise de acesso aos documentos'
     },
     {
-      href: '/protection-dashboard',
-      label: 'Proteção',
-      icon: ShieldCheckIcon,
-      description: 'Dashboard de proteção'
-    },
-    {
       href: '/settings',
       label: 'Configurações',
       icon: Cog6ToothIcon,
@@ -84,12 +78,7 @@ export default function Navigation() {
             icon: UserGroupIcon,
       description: 'Gerenciar clientes'
     },
-    {
-      href: '/protection-dashboard',
-      label: 'Proteção',
-      icon: ShieldCheckIcon,
-      description: 'Dashboard de proteção'
-    },
+
     {
       href: '/admin/analytics',
       label: 'Analytics',

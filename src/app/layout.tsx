@@ -71,7 +71,7 @@ export default function RootLayout({
         </Script>
         <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/sf-pro-display" />
       </head>
-      <body className={cn(inter.className, "min-h-screen bg-background")}>
+      <body className={cn(inter.className, "min-h-screen bg-background")} suppressHydrationWarning>
         <noscript>
           <iframe 
             src="https://www.googletagmanager.com/ns.html?id=GTM-WNKND9BM"

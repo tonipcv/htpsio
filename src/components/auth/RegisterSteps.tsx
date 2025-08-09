@@ -6,19 +6,33 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
-import { slugify } from "@/lib/utils";
 import { signIn } from "next-auth/react";
+import { slugify } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-// Step 1: Initial data form
+// Step 1: Email collection only
 function Step1({
   formData,
   setFormData,
-  onNext
+  onNext,
+  isLoading,
+  setIsLoading
 }: {
   formData: any;
   setFormData: (data: any) => void;
   onNext: () => void;
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
 }) {
+  const [errorMsg, setErrorMsg] = useState("");
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev: any) => ({
@@ -29,34 +43,17 @@ function Step1({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg("");
     
-    // Basic validations
-    if (!formData.name.trim() || !formData.email.trim() || !formData.password) {
-      toast({
-        title: "Validation error",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Validation error",
-        description: "Passwords do not match.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     // Email validation
+    if (!formData.email.trim()) {
+      setErrorMsg("Please enter your email address");
+      return;
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address.",
-        variant: "destructive",
-      });
+      setErrorMsg("Please enter a valid email address");
       return;
     }
 
@@ -64,22 +61,11 @@ function Step1({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="name" className="font-normal text-zinc-300">Full name</Label>
-        <Input
-          id="name"
-          name="name"
-          placeholder="Your full name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-          className="bg-zinc-800 border-zinc-700 text-zinc-200"
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="email" className="font-normal text-zinc-300">Email</Label>
+        <Label htmlFor="email">
+          Email
+        </Label>
         <Input
           id="email"
           name="email"
@@ -88,40 +74,29 @@ function Step1({
           value={formData.email}
           onChange={handleChange}
           required
-          className="bg-zinc-800 border-zinc-700 text-zinc-200"
+          autoComplete="email"
+          disabled={isLoading}
+          className="relative"
         />
       </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="password" className="font-normal text-zinc-300">Password</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          placeholder="Create a secure password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          className="bg-zinc-800 border-zinc-700 text-zinc-200"
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword" className="font-normal text-zinc-300">Confirm password</Label>
-        <Input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          placeholder="Confirm your password"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          required
-          className="bg-zinc-800 border-zinc-700 text-zinc-200"
-        />
-      </div>
-      
-      <Button type="submit" className="w-full font-normal">
-        Continue
+
+      {errorMsg && (
+        <div className="relative text-red-400 text-sm text-center">{errorMsg}</div>
+      )}
+
+      <Button 
+        type="submit" 
+        disabled={isLoading}
+        className="relative w-full bg-[#1c1d20] hover:bg-[#f5f5f7]/5 text-[#f5f5f7] border border-[#f5f5f7]/10 py-6"
+      >
+        {isLoading ? (
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <span>Processing...</span>
+          </div>
+        ) : (
+          'Continue'
+        )}
       </Button>
     </form>
   );
@@ -142,12 +117,13 @@ function Step2({
   setIsLoading: (loading: boolean) => void;
 }) {
   const [codeSent, setCodeSent] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const sendVerificationCode = async () => {
     setIsLoading(true);
+    setErrorMsg("");
     
     try {
-      console.log('Sending verification code to:', email);
       const response = await fetch('/api/auth/register/send-code', {
         method: 'POST',
         headers: {
@@ -156,9 +132,7 @@ function Step2({
         body: JSON.stringify({ email }),
       });
 
-      console.log('Response status:', response.status);
       const data = await response.json();
-      console.log('Response data:', data);
 
       if (!response.ok) {
         throw new Error(data.message || 'Error sending code');
@@ -166,48 +140,52 @@ function Step2({
 
       setCodeSent(true);
       toast({
-        title: "Code sent!",
-        description: "Check your email for the verification code.",
+        title: "Success",
+        description: "Verification code sent to your email",
       });
       
-      console.log('Code sent successfully, advancing to next step');
       // Add a small delay before advancing to next step
       setTimeout(() => {
         onNext();
-      }, 500);
+      }, 1000);
     } catch (error: any) {
       console.error('Error sending verification code:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Could not send verification code.",
-        variant: "destructive",
-      });
+      setErrorMsg(error.message || "Could not send verification code");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-lg font-medium text-zinc-200">Email Verification</h3>
-        <p className="text-sm text-zinc-400 mt-1">
+        <h3 className="text-lg font-medium text-[#f5f5f7]">Email Verification</h3>
+        <p className="text-sm text-[#f5f5f7]/70 mt-1">
           We'll send a verification code to {email}
         </p>
       </div>
       
+      {errorMsg && (
+        <div className="relative text-red-400 text-sm text-center">{errorMsg}</div>
+      )}
+      
       <Button 
         onClick={sendVerificationCode} 
-        className="w-full font-normal"
+        className="relative w-full bg-[#1c1d20] hover:bg-[#f5f5f7]/5 text-[#f5f5f7] border border-[#f5f5f7]/10 py-6"
         disabled={isLoading || codeSent}
       >
-        {isLoading ? "Sending..." : codeSent ? "Code sent!" : "Send verification code"}
+        {isLoading ? (
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <span>Sending code...</span>
+          </div>
+        ) : codeSent ? "Code sent!" : "Send verification code"}
       </Button>
       
       <Button 
         variant="outline" 
         onClick={onBack} 
-        className="w-full font-normal text-zinc-300 border-zinc-700 hover:bg-zinc-700 hover:text-zinc-200"
+        className="relative w-full border border-[#f5f5f7]/10 text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#f5f5f7]/5"
         disabled={isLoading}
       >
         Back
@@ -231,10 +209,12 @@ function Step3({
   setIsLoading: (loading: boolean) => void;
 }) {
   const [verificationCode, setVerificationCode] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const verifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMsg("");
     
     try {
       const response = await fetch('/api/auth/register/verify-code', {
@@ -255,56 +235,66 @@ function Step3({
       }
 
       toast({
-        title: "Code verified!",
-        description: "Your email has been successfully verified.",
+        title: "Success",
+        description: "Your email has been successfully verified",
       });
       
       onNext();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Invalid or expired code.",
-        variant: "destructive",
-      });
+      setErrorMsg(error.message || "Invalid or expired code");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <form onSubmit={verifyCode} className="space-y-4">
+    <form onSubmit={verifyCode} className="space-y-6">
       <div className="text-center">
-        <h3 className="text-lg font-medium text-zinc-200">Confirm code</h3>
-        <p className="text-sm text-zinc-400 mt-1">
+        <h3 className="text-lg font-medium text-[#f5f5f7]">Confirm code</h3>
+        <p className="text-sm text-[#f5f5f7]/70 mt-1">
           Enter the verification code sent to {email}
         </p>
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="verificationCode" className="font-normal text-zinc-300">Verification code</Label>
+        <Label htmlFor="verificationCode">
+          Verification code
+        </Label>
         <Input
           id="verificationCode"
           value={verificationCode}
           onChange={(e) => setVerificationCode(e.target.value)}
           placeholder="Enter the 6-digit code"
           required
-          className="bg-zinc-800 border-zinc-700 text-zinc-200"
+          className="relative"
+          maxLength={6}
         />
       </div>
       
+      {errorMsg && (
+        <div className="relative text-red-400 text-sm text-center">{errorMsg}</div>
+      )}
+      
       <Button 
         type="submit" 
-        className="w-full font-normal"
+        className="relative w-full bg-[#1c1d20] hover:bg-[#f5f5f7]/5 text-[#f5f5f7] border border-[#f5f5f7]/10 py-6"
         disabled={isLoading || !verificationCode}
       >
-        {isLoading ? "Verifying..." : "Verify code"}
+        {isLoading ? (
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <span>Verifying...</span>
+          </div>
+        ) : (
+          'Verify code'
+        )}
       </Button>
       
       <Button 
         type="button"
         variant="outline" 
         onClick={onBack} 
-        className="w-full font-normal text-zinc-300 border-zinc-700 hover:bg-zinc-700 hover:text-zinc-200"
+        className="relative w-full border border-[#f5f5f7]/10 text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#f5f5f7]/5"
         disabled={isLoading}
       >
         Back
@@ -313,8 +303,250 @@ function Step3({
   );
 }
 
-// Step 4: Final confirmation and account creation
+// Step 4: Company information and password
 function Step4({
+  formData,
+  setFormData,
+  onBack,
+  onNext,
+  isLoading,
+  setIsLoading
+}: {
+  formData: any;
+  setFormData: (data: any) => void;
+  onBack: () => void;
+  onNext: () => void;
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
+}) {
+  const [errorMsg, setErrorMsg] = useState("");
+  const [showCustomIndustry, setShowCustomIndustry] = useState(formData.industry === "other");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev: any) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    if (name === "industry" && value === "other") {
+      setShowCustomIndustry(true);
+    } else if (name === "industry") {
+      setShowCustomIndustry(false);
+    }
+    
+    setFormData((prev: any) => ({
+      ...prev,
+      [name]: value,
+      // Clear customIndustry if not selecting "other"
+      ...(name === "industry" && value !== "other" ? { customIndustry: "" } : {})
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg("");
+    
+    // Basic validations
+    if (!formData.companyName?.trim()) {
+      setErrorMsg("Please enter your company name");
+      return;
+    }
+
+    if (!formData.teamSize?.trim()) {
+      setErrorMsg("Please select your team size");
+      return;
+    }
+
+    if (!formData.industry?.trim()) {
+      setErrorMsg("Please select your industry");
+      return;
+    }
+
+    if (formData.industry === "other" && !formData.customIndustry?.trim()) {
+      setErrorMsg("Please specify your industry");
+      return;
+    }
+
+    if (!formData.password?.trim()) {
+      setErrorMsg("Please create a password");
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setErrorMsg("Passwords do not match");
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setErrorMsg("Password must be at least 8 characters");
+      return;
+    }
+
+    onNext();
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="text-center">
+        <h3 className="text-lg font-medium text-[#f5f5f7]">Company Information</h3>
+        <p className="text-sm text-[#f5f5f7]/70 mt-1">
+          Tell us about your company
+        </p>
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="companyName">
+          Company Name
+        </Label>
+        <Input
+          id="companyName"
+          name="companyName"
+          placeholder="Your company name"
+          value={formData.companyName || ""}
+          onChange={handleChange}
+          required
+          disabled={isLoading}
+          className="relative"
+          autoComplete="organization"
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="teamSize">
+          Team Size
+        </Label>
+        <Select
+          value={formData.teamSize || ""}
+          onValueChange={(value) => handleSelectChange("teamSize", value)}
+          disabled={isLoading}
+        >
+          <SelectTrigger className="relative bg-[#1c1d20] border-[#f5f5f7]/10">
+            <SelectValue placeholder="Select team size" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#1c1d20] border-[#f5f5f7]/10 text-[#f5f5f7]">
+            <SelectItem value="1-10">1-10 employees</SelectItem>
+            <SelectItem value="11-50">11-50 employees</SelectItem>
+            <SelectItem value="51-200">51-200 employees</SelectItem>
+            <SelectItem value="201-500">201-500 employees</SelectItem>
+            <SelectItem value="501+">501+ employees</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="industry">
+          Industry
+        </Label>
+        <Select
+          value={formData.industry || ""}
+          onValueChange={(value) => handleSelectChange("industry", value)}
+          disabled={isLoading}
+        >
+          <SelectTrigger className="relative bg-[#1c1d20] border-[#f5f5f7]/10">
+            <SelectValue placeholder="Select industry" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#1c1d20] border-[#f5f5f7]/10 text-[#f5f5f7]">
+            <SelectItem value="technology">Technology</SelectItem>
+            <SelectItem value="healthcare">Healthcare</SelectItem>
+            <SelectItem value="finance">Finance</SelectItem>
+            <SelectItem value="education">Education</SelectItem>
+            <SelectItem value="retail">Retail</SelectItem>
+            <SelectItem value="manufacturing">Manufacturing</SelectItem>
+            <SelectItem value="other">Other</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      {showCustomIndustry && (
+        <div className="space-y-2">
+          <Label htmlFor="customIndustry">
+            Specify Industry
+          </Label>
+          <Input
+            id="customIndustry"
+            name="customIndustry"
+            placeholder="Enter your industry"
+            value={formData.customIndustry || ""}
+            onChange={handleChange}
+            required
+            disabled={isLoading}
+            className="relative"
+          />
+        </div>
+      )}
+      
+      <div className="space-y-2">
+        <Label htmlFor="password">
+          Password
+        </Label>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          placeholder="Create a secure password"
+          value={formData.password || ""}
+          onChange={handleChange}
+          required
+          disabled={isLoading}
+          className="relative"
+          minLength={8}
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="confirmPassword">
+          Confirm Password
+        </Label>
+        <Input
+          id="confirmPassword"
+          name="confirmPassword"
+          type="password"
+          placeholder="Confirm your password"
+          value={formData.confirmPassword || ""}
+          onChange={handleChange}
+          required
+          disabled={isLoading}
+          className="relative"
+        />
+      </div>
+
+      {errorMsg && (
+        <div className="relative text-red-400 text-sm text-center">{errorMsg}</div>
+      )}
+      
+      <Button 
+        type="submit" 
+        className="relative w-full bg-[#1c1d20] hover:bg-[#f5f5f7]/5 text-[#f5f5f7] border border-[#f5f5f7]/10 py-6"
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <span>Processing...</span>
+          </div>
+        ) : (
+          'Continue'
+        )}
+      </Button>
+      
+      <Button 
+        type="button"
+        variant="outline" 
+        onClick={onBack} 
+        className="relative w-full border border-[#f5f5f7]/10 text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#f5f5f7]/5"
+        disabled={isLoading}
+      >
+        Back
+      </Button>
+    </form>
+  );
+}
+
+// Step 5: Final confirmation and account creation
+function Step5({
   formData,
   onBack,
   isLoading,
@@ -327,65 +559,69 @@ function Step4({
   setIsLoading: (loading: boolean) => void;
   onComplete: () => void;
 }) {
+  const [errorMsg, setErrorMsg] = useState("");
+
   const createAccount = async () => {
     setIsLoading(true);
+    setErrorMsg("");
     
     try {
-      // Generate slug from name
-      const slug = slugify(formData.name);
-
+      // Generate slug from company name
+      const slug = slugify(formData.companyName);
+      
+      // Prepare the industry value - use customIndustry if industry is "other"
+      const industryValue = formData.industry === "other" ? formData.customIndustry : formData.industry;
+      
       const response = await fetch('/api/auth/register/complete', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          name: formData.name,
           email: formData.email,
+          name: formData.companyName,
           password: formData.password,
-          slug: slug
-        }),
+          slug: slug,
+          // Include the new fields
+          companyName: formData.companyName,
+          teamSize: formData.teamSize,
+          industry: formData.industry,
+          customIndustry: formData.industry === "other" ? formData.customIndustry : null
+        })
       });
-
+      
       const data = await response.json();
-
+      
       if (!response.ok) {
-        throw new Error(data.message || 'Error creating account');
+        throw new Error(data.message || 'Failed to create account');
       }
-
-      toast({
-        title: "Account created successfully!",
-        description: "You will be redirected to your dashboard.",
+      
+      // Auto login after successful registration
+      const loginResponse = await signIn('credentials', {
+        redirect: false,
+        email: formData.email,
+        password: formData.password
       });
       
-      // Login automático usando o token JWT
-      if (data.token) {
-        console.log('Attempting automatic login with token');
-        try {
-          // Usar o token para autenticação via NextAuth
-          const result = await signIn('credentials', {
-            token: data.token,
-            redirect: false
-          });
-          
-          if (result?.error) {
-            console.error('Auto-login error:', result.error);
-            throw new Error(result.error);
-          }
-          
-          console.log('Auto-login successful');
-        } catch (loginError) {
-          console.error('Error during auto-login:', loginError);
-          // Mesmo com erro no login automático, continuar com o fluxo normal
-        }
+      if (loginResponse?.error) {
+        throw new Error(loginResponse.error || 'Failed to sign in');
       }
       
-      onComplete();
+      toast({
+        title: "Success!",
+        description: "Your account has been created and you're now logged in."
+      });
+      
+      // Redirect to dashboard
+      window.location.href = '/dashboard';
+      
     } catch (error: any) {
+      console.error('Registration error:', error);
+      setErrorMsg(error.message || 'An unexpected error occurred');
       toast({
         title: "Error",
-        description: error.message || "Could not create your account.",
-        variant: "destructive",
+        description: error.message || 'Failed to create account',
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -393,37 +629,58 @@ function Step4({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-lg font-medium text-zinc-200">Confirm registration</h3>
-        <p className="text-sm text-zinc-400 mt-1">
+        <h3 className="text-lg font-medium text-[#f5f5f7]">Confirm Registration</h3>
+        <p className="text-sm text-[#f5f5f7]/70 mt-1">
           Verify your information before creating your account
         </p>
       </div>
       
-      <div className="space-y-2 bg-zinc-800 border border-zinc-700 p-4 rounded-md">
+      <div className="space-y-3 bg-[#1c1d20] border border-[#f5f5f7]/10 p-4 rounded-xl">
         <div className="flex justify-between">
-          <span className="text-sm text-zinc-400">Name:</span>
-          <span className="text-sm font-medium text-zinc-200">{formData.name}</span>
+          <span className="text-sm text-[#f5f5f7]/70">Company:</span>
+          <span className="text-sm font-medium text-[#f5f5f7]">{formData.companyName}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-sm text-zinc-400">Email:</span>
-          <span className="text-sm font-medium text-zinc-200">{formData.email}</span>
+          <span className="text-sm text-[#f5f5f7]/70">Email:</span>
+          <span className="text-sm font-medium text-[#f5f5f7]">{formData.email}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-sm text-[#f5f5f7]/70">Team Size:</span>
+          <span className="text-sm font-medium text-[#f5f5f7]">{formData.teamSize}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-sm text-[#f5f5f7]/70">Industry:</span>
+          <span className="text-sm font-medium text-[#f5f5f7]">
+            {formData.industry === "other" ? formData.customIndustry : formData.industry}
+          </span>
         </div>
       </div>
       
+      {errorMsg && (
+        <div className="relative text-red-400 text-sm text-center">{errorMsg}</div>
+      )}
+      
       <Button 
         onClick={createAccount} 
-        className="w-full font-normal"
+        className="relative w-full bg-[#1c1d20] hover:bg-[#f5f5f7]/5 text-[#f5f5f7] border border-[#f5f5f7]/10 py-6"
         disabled={isLoading}
       >
-        {isLoading ? "Creating account..." : "Create account"}
+        {isLoading ? (
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <span>Creating account...</span>
+          </div>
+        ) : (
+          'Create Account'
+        )}
       </Button>
       
       <Button 
         variant="outline" 
         onClick={onBack} 
-        className="w-full font-normal text-zinc-300 border-zinc-700 hover:bg-zinc-700 hover:text-zinc-200"
+        className="relative w-full border border-[#f5f5f7]/10 text-[#f5f5f7]/70 hover:text-[#f5f5f7] hover:bg-[#f5f5f7]/5"
         disabled={isLoading}
       >
         Back
@@ -432,80 +689,114 @@ function Step4({
   );
 }
 
-export function RegisterSteps() {
-  const router = useRouter();
+export default function RegisterSteps() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
+    email: "",
+    companyName: "",
+    teamSize: "",
+    industry: "",
+    password: "",
+    confirmPassword: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const goToNextStep = () => {
-    setCurrentStep(currentStep + 1);
+  const handleNextStep = () => {
+    // Clear company name if it's the same as email when moving to step 4
+    if (currentStep === 3) {
+      if (formData.companyName === formData.email) {
+        setFormData(prev => ({
+          ...prev,
+          companyName: ""
+        }));
+      }
+    }
+    setCurrentStep(prev => prev + 1);
   };
 
-  const goToPreviousStep = () => {
-    setCurrentStep(currentStep - 1);
+  const handlePreviousStep = () => {
+    setCurrentStep(prev => prev - 1);
   };
 
-  const completeRegistration = () => {
-    // Redirect directly to documents page (authenticated area)
-    router.push('/documents');
+  const handleComplete = () => {
+    // Redirect to dashboard or login page
+    window.location.href = "/dashboard";
   };
 
   return (
-    <div className="w-full">
+    <div className="space-y-6">
       {/* Progress indicator */}
-      <div className="flex justify-between mb-8">
-        {[1, 2, 3, 4].map((step) => (
-          <div 
-            key={step} 
-            className={`flex-1 h-1 mx-1 rounded-full ${
-              step <= currentStep ? 'bg-primary' : 'bg-zinc-700'
-            }`}
-          />
-        ))}
+      <div className="flex justify-center mb-4">
+        <div className="flex items-center space-x-2">
+          {[1, 2, 3, 4, 5].map((step) => (
+            <div key={step} className="flex items-center">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  currentStep === step
+                    ? "bg-[#f5f5f7] text-[#1c1d20]"
+                    : currentStep > step
+                    ? "bg-[#f5f5f7]/70 text-[#1c1d20]"
+                    : "bg-[#1c1d20] text-[#f5f5f7]/50 border border-[#f5f5f7]/10"
+                }`}
+              >
+                {currentStep > step ? "✓" : step}
+              </div>
+              {step < 5 && (
+                <div className="w-10 h-0.5 bg-[#f5f5f7]/10"></div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
-
-      {/* Steps */}
+      
       {currentStep === 1 && (
         <Step1 
-          formData={formData} 
-          setFormData={setFormData} 
-          onNext={goToNextStep} 
+          formData={formData}
+          setFormData={setFormData}
+          onNext={handleNextStep}
+          isLoading={isLoading}
+          setIsLoading={setIsLoading}
         />
       )}
       
       {currentStep === 2 && (
         <Step2 
           email={formData.email}
-          onBack={goToPreviousStep}
-          onNext={goToNextStep}
+          onBack={handlePreviousStep}
+          onNext={handleNextStep}
           isLoading={isLoading}
           setIsLoading={setIsLoading}
         />
       )}
       
       {currentStep === 3 && (
-        <Step3 
+        <Step3
           email={formData.email}
-          onBack={goToPreviousStep}
-          onNext={goToNextStep}
+          onBack={handlePreviousStep}
+          onNext={handleNextStep}
           isLoading={isLoading}
           setIsLoading={setIsLoading}
         />
       )}
       
       {currentStep === 4 && (
-        <Step4 
+        <Step4
           formData={formData}
-          onBack={goToPreviousStep}
+          setFormData={setFormData}
+          onBack={handlePreviousStep}
+          onNext={handleNextStep}
           isLoading={isLoading}
           setIsLoading={setIsLoading}
-          onComplete={completeRegistration}
+        />
+      )}
+      
+      {currentStep === 5 && (
+        <Step5
+          formData={formData}
+          onBack={handlePreviousStep}
+          onComplete={handleComplete}
+          isLoading={isLoading}
+          setIsLoading={setIsLoading}
         />
       )}
     </div>

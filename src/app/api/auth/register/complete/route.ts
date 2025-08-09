@@ -10,7 +10,12 @@ const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email format"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  slug: z.string().min(1, "Username is required")
+  slug: z.string().min(1, "Username is required"),
+  // New fields
+  companyName: z.string().min(1, "Company name is required"),
+  teamSize: z.string().min(1, "Team size is required"),
+  industry: z.string().min(1, "Industry is required"),
+  customIndustry: z.string().nullable().optional()
 });
 
 // Email transport configuration
@@ -69,7 +74,16 @@ export async function POST(req: Request) {
       );
     }
     
-    const { name, email, password, slug } = validatedData;
+    const { 
+      name, 
+      email, 
+      password, 
+      slug, 
+      companyName, 
+      teamSize, 
+      industry, 
+      customIndustry 
+    } = validatedData;
 
     // Check if email has been verified
     const verificationRecord = await prisma.verificationCode.findFirst({
@@ -204,6 +218,11 @@ export async function POST(req: Request) {
         password: hashedPassword,
         slug,
         plan: "free",
+        // Add the new fields
+        companyName,
+        teamSize,
+        industry,
+        customIndustry: industry === "other" ? customIndustry : null,
       },
     });
     
